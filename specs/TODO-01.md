@@ -18,9 +18,10 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Phase 0: Setup and skills
 
-- [x] T0.1 Verify the environment: `git status`, `node -v`, `pnpm -v`, Ollama reachable with a Gemma-4 E2B model, MariaDB available locally. Record versions and the exact Ollama model tag in Changelog.
+- [x] T0.1 Verify the environment: `git status`, `node -v`, `pnpm -v`, Ollama reachable with a Gemma-4 E2B model, MariaDB available locally. Record versions and the exact Ollama model tag in Changelog. (36b08ea)
   - Note: MariaDB is NOT installed locally and Docker is broken (see Changelog). Provision it before T1.4/T1.6.
-- [ ] T0.2 Find and install agent skills for React and Next.js best practices (required by the spec). Also install skills for TypeScript, web security and Drizzle/MariaDB if available. Record the skill names here.
+- [x] T0.2 Find and install agent skills for React and Next.js best practices (required by the spec). Also install skills for TypeScript, web security and Drizzle/MariaDB if available. Record the skill names here.
+  - Installed (project-level, `.agents/skills/`, tracked in `skills-lock.json`, via `npx skills add -a github-copilot`): `vercel-react-best-practices` (vercel-labs/agent-skills), `nextjs-app-router-patterns` (wshobson/agents), `typescript-advanced-types` (wshobson/agents), `security-best-practices` (openai/skills), `drizzle-orm-patterns` (giuseppe-trisciuoglio/developer-kit), `mysql` (planetscale/database-skills, covers MariaDB-compatible MySQL).
 - [ ] T0.3 Add `.gitignore` (node_modules, `.next`, `.env*` except `.env.example`, `models/*.onnx`, `models/labels.txt`, logs).
 
 ## Phase 1: Foundation

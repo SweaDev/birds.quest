@@ -1,4 +1,21 @@
-*.log
+# dependencies and build output
 node_modules
+.next
 dist
+out
+*.tsbuildinfo
+next-env.d.ts
+
+# environment (keep the example)
 .env
+.env.*
+!.env.example
+
+# BirdNET model files (downloaded by scripts/download-models.ts)
+models/*.onnx
+models/labels.txt
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
