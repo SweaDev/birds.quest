@@ -26,8 +26,8 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Phase 1: Foundation
 
-- [x] T1.1 Scaffold Next.js (App Router, TypeScript strict, ESLint) with pnpm at the repo root. Keep `specs/`, `LICENSE` and `README.md`.
-- [ ] T1.2 Add Vitest, and scripts `lint`, `typecheck`, `test`, `build`, `worker`, `db:generate`, `db:migrate`.
+- [x] T1.1 Scaffold Next.js (App Router, TypeScript strict, ESLint) with pnpm at the repo root. Keep `specs/`, `LICENSE` and `README.md`. (7414ddb)
+- [x] T1.2 Add Vitest, and scripts `lint`, `typecheck`, `test`, `build`, `worker`, `db:generate`, `db:migrate`.
 - [ ] T1.3 Add a validated config module (zod) and `.env.example`: DB URLs (app RW, Traccar RO), LLM provider and key and model, admin password hash, session secret, idle threshold, minimum trip minutes, prediction threshold and top-K.
 - [ ] T1.4 Add Drizzle ORM (MariaDB) and the schema: `trips`, `predictions`, `species_info`, `posts`, `post_species`, `jobs`, `admin_sessions`. Unique source key on `trips`. Generate the initial migration.
 - [ ] T1.5 Add a read-only Traccar DB client (`tc_devices`, `tc_positions`) and a dev seed script that creates fake Traccar tables and positions for local testing.
