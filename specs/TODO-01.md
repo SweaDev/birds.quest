@@ -18,7 +18,8 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Phase 0: Setup and skills
 
-- [ ] T0.1 Verify the environment: `git status`, `node -v`, `pnpm -v`, Ollama reachable with a Gemma-4 E2B model, MariaDB available locally. Record versions and the exact Ollama model tag in Changelog.
+- [x] T0.1 Verify the environment: `git status`, `node -v`, `pnpm -v`, Ollama reachable with a Gemma-4 E2B model, MariaDB available locally. Record versions and the exact Ollama model tag in Changelog.
+  - Note: MariaDB is NOT installed locally and Docker is broken (see Changelog). Provision it before T1.4/T1.6.
 - [ ] T0.2 Find and install agent skills for React and Next.js best practices (required by the spec). Also install skills for TypeScript, web security and Drizzle/MariaDB if available. Record the skill names here.
 - [ ] T0.3 Add `.gitignore` (node_modules, `.next`, `.env*` except `.env.example`, `models/*.onnx`, `models/labels.txt`, logs).
 
@@ -79,3 +80,4 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 ## Changelog
 
 - 2026-10-12: Initial task list created from PLAN-01.
+- 2026-10-12 (T0.1): Environment check. Node v22.14.0, pnpm 12.6.0, npm 11.15.0, Ollama 0.34.0 reachable at `localhost:11434` with Gemma-4 E2B as `gemma4:e2b` (use this exact tag; `gemma4:e4b` and `gemma4:12b` also present). Git tree was clean. MariaDB is not installed (no `mariadb`/`mysql` binaries, no service on 3306; apt candidate `mariadb-server 1:11.8.6`). Docker is present and `mariadb:11.8` was pulled, but containers fail to start (containerd shim/API mismatch, needs a daemon restart). Action: install `mariadb-server` via apt or restart Docker before T1.4/T1.6.
