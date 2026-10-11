@@ -14,6 +14,7 @@ next-env.d.ts
 # BirdNET model files (downloaded by scripts/download-models.ts)
 models/*.onnx
 models/labels.txt
+models/*.part
 
 # logs
 *.log

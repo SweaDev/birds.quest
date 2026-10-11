@@ -38,8 +38,9 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] T2.1 Trip discovery (`src/lib/trips.ts`, `traccar.ts`): split positions into trips by idle gap or motion, accept only ended trips (last position older than the idle threshold), ignore trips under 10 minutes, insert idempotently, enqueue a `predict` job. (7a5d3e0)
 - [x] T2.2 Tests for trip splitting: 9 min ignored, 11 min accepted, ongoing trip not processed, re-run is idempotent. (753da78)
 - [x] T2.3 DB-backed queue (`src/lib/queue.ts`): claim with `FOR UPDATE SKIP LOCKED`, retries with backoff, stale lock recovery, job types `discover`, `predict`, `generate`. Tests included. (46a4d90)
-- [x] T2.4 Worker entry `worker/run.ts`: enqueue `discover`, then drain the queue once and exit with a clear log. Wire `pnpm worker`.
-- [ ] T2.5 Model download script `scripts/download-models.ts`: fetch `geomodel_fp16.onnx`, `labels.txt` and the licence from the BirdNET geomodel release (confirm the URL). Verify size or checksum. Output goes to the gitignored `models/`.
+- [x] T2.4 Worker entry `worker/run.ts`: enqueue `discover`, then drain the queue once and exit with a clear log. Wire `pnpm worker`. (cdea5f1)
+- [x] T2.5 Model download script `scripts/download-models.ts`: fetch `geomodel_fp16.onnx`, `labels.txt` and the licence from the BirdNET geomodel release (confirm the URL). Verify size or checksum. Output goes to the gitignored `models/`.
+  - Done: `pnpm models:download` pins BirdNET+ Geomodel release v3.0.4 (FP16 ONNX, labels, `LICENSE-MODELS.md`) with sha256 + size checks. The licence file in `models/` is committed; the binaries are not.
 - [ ] T2.6 GeoModel wrapper (`src/lib/geomodel.ts`) with `onnxruntime-node`: input `(N,3)` float32 `[lat, lon, week]` (input name `input`), parse `labels.txt` (code, scientific, common), batch inference.
 - [ ] T2.7 Prediction job: compute week 1-48 from the trip mid-time, sample route points about every few hundred metres, aggregate per species, apply threshold and top-K, store in `predictions`, enqueue enrichment and generation. Tests include a sample check (lat 52.5, lon 13.4, week 22 gives Eurasian Blackbird and Great Tit near the top).
 - [ ] T2.8 Wikipedia client (`src/lib/wikipedia.ts`): `page/summary/{title}`, scientific name first then common name, User-Agent header, caching in `species_info`, rate limiting, image attribution and licence, skip images without licence info. Tests with mocked fetch.
@@ -75,7 +76,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 ## Open questions
 
 - Publish flow: draft needing owner approval (default) or auto-publish? Default is draft.
-- Exact download URL for the ONNX model and labels: confirm during T2.5.
+- ~~Exact download URL for the ONNX model and labels~~ Resolved in T2.5: GitHub release `birdnet-team/geomodel` v3.0.4.
 - Exact Gemma-4 model IDs on DigitalOcean and in Ollama: confirm during T2.9.
 
 ## Changelog
@@ -88,3 +89,5 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 - 2026-10-12 (T1.3): `ADMIN_PASSWORD_HASH` is written with `\$` escapes in `.env` (Next expands `$VAR`), unescaped by the config module. Dev `.env` has a placeholder hash until the T3.2 password-hash helper exists.
 - 2026-10-12 (T1.4/T1.5): schema additions beyond the plan: `jobs.dedupe_key` (unique, for idempotent enqueue), `jobs.max_attempts`, `admin_sessions.csrf_token`, `posts.trip_id` unique (one post per trip), `species_info` keyed by species code. Added `src/db/pool.ts` (shared mysql2 pool, UTC timezone), and `scripts/seed-data.ts` (pure walk builders reused by T2.2 tests). Login rate limiting storage will be added in T3.2.
 - 2026-10-12 (T1.6): `pnpm test` runs 23 tests; the DB smoke tests skip when the DB env vars are unset.
+- 2026-10-12 (T2.5): Release v3.0.4 is the 14K-species model and covers more than birds. In `labels.txt`, birds have eBird codes (e.g. `gretit1`) while other taxa have purely numeric iNaturalist ids (3,672 of 14,082 lines). T2.6 must keep only non-numeric codes. Common names also changed ("Common Blackbird" instead of "Eurasian Blackbird"), so the T2.7 sample check asserts on scientific names (Turdus merula, Parus major).
+- 2026-10-12 (T2.3/T2.4): all DB sessions are forced to UTC (`SET time_zone`) so server-side defaults match the JS dates used by the queue. `runQueue` only claims job types that have a handler, so `predict`/`generate` jobs wait until their handlers exist. `discoverTrips` also re-enqueues a `predict` job for any trip still in status `discovered`, which covers a crash between inserting the trip and enqueueing.
