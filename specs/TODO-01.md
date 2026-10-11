@@ -19,7 +19,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 ## Phase 0: Setup and skills
 
 - [x] T0.1 Verify the environment: `git status`, `node -v`, `pnpm -v`, Ollama reachable with a Gemma-4 E2B model, MariaDB available locally. Record versions and the exact Ollama model tag in Changelog. (36b08ea)
-  - Note: MariaDB is NOT installed locally and Docker is broken (see Changelog). Provision it before T1.4/T1.6.
+  - Note: MariaDB was missing at first; installed via apt during Phase 1 (see Changelog).
 - [x] T0.2 Find and install agent skills for React and Next.js best practices (required by the spec). Also install skills for TypeScript, web security and Drizzle/MariaDB if available. Record the skill names here. (279d268)
   - Installed (project-level, `.agents/skills/`, tracked in `skills-lock.json`, via `npx skills add -a github-copilot`): `vercel-react-best-practices` (vercel-labs/agent-skills), `nextjs-app-router-patterns` (wshobson/agents), `typescript-advanced-types` (wshobson/agents), `security-best-practices` (openai/skills), `drizzle-orm-patterns` (giuseppe-trisciuoglio/developer-kit), `mysql` (planetscale/database-skills, covers MariaDB-compatible MySQL).
 - [x] T0.3 Add `.gitignore` (node_modules, `.next`, `.env*` except `.env.example`, `models/*.onnx`, `models/labels.txt`, logs). (279d268)
@@ -30,8 +30,8 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] T1.2 Add Vitest, and scripts `lint`, `typecheck`, `test`, `build`, `worker`, `db:generate`, `db:migrate`. (63a2671)
 - [x] T1.3 Add a validated config module (zod) and `.env.example`: DB URLs (app RW, Traccar RO), LLM provider and key and model, admin password hash, session secret, idle threshold, minimum trip minutes, prediction threshold and top-K. (6d78093)
 - [x] T1.4 Add Drizzle ORM (MariaDB) and the schema: `trips`, `predictions`, `species_info`, `posts`, `post_species`, `jobs`, `admin_sessions`. Unique source key on `trips`. Generate the initial migration. (6c1bb2d)
-- [x] T1.5 Add a read-only Traccar DB client (`tc_devices`, `tc_positions`) and a dev seed script that creates fake Traccar tables and positions for local testing.
-- [ ] T1.6 Tests: config validation and DB connection smoke test.
+- [x] T1.5 Add a read-only Traccar DB client (`tc_devices`, `tc_positions`) and a dev seed script that creates fake Traccar tables and positions for local testing. (d14d108)
+- [x] T1.6 Tests: config validation and DB connection smoke test.
 
 ## Phase 2: Pipeline
 
@@ -82,3 +82,9 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 - 2026-10-12: Initial task list created from PLAN-01.
 - 2026-10-12 (T0.1): Environment check. Node v22.14.0, pnpm 12.6.0, npm 11.15.0, Ollama 0.34.0 reachable at `localhost:11434` with Gemma-4 E2B as `gemma4:e2b` (use this exact tag; `gemma4:e4b` and `gemma4:12b` also present). Git tree was clean. MariaDB is not installed (no `mariadb`/`mysql` binaries, no service on 3306; apt candidate `mariadb-server 1:11.8.6`). Docker is present and `mariadb:11.8` was pulled, but containers fail to start (containerd shim/API mismatch, needs a daemon restart). Action: install `mariadb-server` via apt or restart Docker before T1.4/T1.6.
+- 2026-10-12 (Phase 1): Installed `mariadb-server` 11.8 via apt for local dev (Docker was unusable). Dev DBs `birdsquest`, `birdsquest_test`, `traccar`; users `birdsquest` (RW), `birdsquest_ro` (SELECT on `traccar`), `traccar_dev` (seed only). Credentials live only in the gitignored `.env`.
+- 2026-10-12 (T1.1): `create-next-app` generated Next 16.4 with `cacheComponents` and Google fonts; both removed (cache components force Suspense around all dynamic DB reads, and font download needs network at build). Re-evaluate before Phase 3. The generated `AGENTS.md` says to read `node_modules/next/dist/docs/` before writing Next code; do that in Phase 3.
+- 2026-10-12 (T1.1): the global pnpm `trustPolicy=no-downgrade` blocked `eslint-import-resolver-typescript@3.10.1` and `semver@6.3.1`; both are narrowly allowed in `pnpm-workspace.yaml` (`trustPolicyExclude`). `@types/node` is `^24` because 22.x depends on the flagged `undici-types@6.21.0` (runtime is still Node 22). Build scripts of `esbuild`, `sharp`, `unrs-resolver` stay disabled (`allowBuilds: false`); T2.6 will need `onnxruntime-node`'s install script, so expect to allow it then.
+- 2026-10-12 (T1.3): `ADMIN_PASSWORD_HASH` is written with `\$` escapes in `.env` (Next expands `$VAR`), unescaped by the config module. Dev `.env` has a placeholder hash until the T3.2 password-hash helper exists.
+- 2026-10-12 (T1.4/T1.5): schema additions beyond the plan: `jobs.dedupe_key` (unique, for idempotent enqueue), `jobs.max_attempts`, `admin_sessions.csrf_token`, `posts.trip_id` unique (one post per trip), `species_info` keyed by species code. Added `src/db/pool.ts` (shared mysql2 pool, UTC timezone), and `scripts/seed-data.ts` (pure walk builders reused by T2.2 tests). Login rate limiting storage will be added in T3.2.
+- 2026-10-12 (T1.6): `pnpm test` runs 23 tests; the DB smoke tests skip when the DB env vars are unset.

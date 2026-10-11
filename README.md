@@ -1,2 +1,49 @@
 # birds.quest
-birds.quest
+
+Auto-blogging from bird watching sessions. GPS tracks recorded with the Traccar Client are turned into a blog post about the birds anyone might see on that route. See [specs/](specs/) for the spec, plan and task list.
+
+> **Privacy rule:** no location data (coordinates, place names) may reach the LLM prompt or the public blog.
+
+## Local development
+
+Requirements: Node 22+, pnpm, MariaDB, and Ollama with `gemma4:e2b`.
+
+```sh
+pnpm install
+cp .env.example .env        # then fill it in, see the comments inside
+```
+
+Create the databases and users (once, as the MariaDB admin):
+
+```sql
+CREATE DATABASE birdsquest CHARACTER SET utf8mb4;
+CREATE DATABASE birdsquest_test CHARACTER SET utf8mb4;
+CREATE DATABASE traccar CHARACTER SET utf8mb4;
+CREATE USER 'birdsquest'@'127.0.0.1' IDENTIFIED BY '...';      -- app, read/write
+CREATE USER 'birdsquest_ro'@'127.0.0.1' IDENTIFIED BY '...';   -- Traccar DB, read-only
+CREATE USER 'traccar_dev'@'127.0.0.1' IDENTIFIED BY '...';     -- dev only, creates fake Traccar tables
+GRANT ALL ON birdsquest.* TO 'birdsquest'@'127.0.0.1';
+GRANT ALL ON birdsquest_test.* TO 'birdsquest'@'127.0.0.1';
+GRANT ALL ON traccar.* TO 'traccar_dev'@'127.0.0.1';
+GRANT SELECT ON traccar.* TO 'birdsquest_ro'@'127.0.0.1';
+```
+
+Then:
+
+```sh
+pnpm db:migrate   # apply migrations to DATABASE_URL
+pnpm db:seed      # fake Traccar tables and walks (needs TRACCAR_ADMIN_DATABASE_URL)
+pnpm dev
+```
+
+| Script | Purpose |
+| --- | --- |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm build` | Checks |
+| `pnpm db:generate` | Generate a migration after editing `src/db/schema.ts` |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:seed` | Seed fake Traccar data (dev only) |
+| `pnpm worker` | Run the job worker once (not implemented yet) |
+
+The database smoke test (`src/db/db.smoke.test.ts`) runs only when `DATABASE_URL` and `TRACCAR_DATABASE_URL` are set.
+
+`ADMIN_PASSWORD_HASH` must have every `$` escaped as `\$` in `.env`.

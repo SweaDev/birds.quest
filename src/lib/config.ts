@@ -14,11 +14,12 @@ const dbUrl = z
     message: "must start with mysql:// or mariadb://",
   });
 
-const number = (min: number, max: number) =>
-  z.preprocess(blankToUndefined, z.coerce.number().min(min).max(max));
+// The default lives inside the preprocess so that blank values also fall back to it.
+const number = (min: number, max: number, fallback: number) =>
+  z.preprocess(blankToUndefined, z.coerce.number().min(min).max(max).default(fallback));
 
-const integer = (min: number, max: number) =>
-  z.preprocess(blankToUndefined, z.coerce.number().int().min(min).max(max));
+const integer = (min: number, max: number, fallback: number) =>
+  z.preprocess(blankToUndefined, z.coerce.number().int().min(min).max(max).default(fallback));
 
 const LLM_DEFAULTS = {
   ollama: {
@@ -54,10 +55,10 @@ const envSchema = z
       }),
     SESSION_SECRET: z.string().min(32, "must be at least 32 characters"),
 
-    IDLE_THRESHOLD_MINUTES: integer(1, 24 * 60).default(10),
-    MIN_TRIP_MINUTES: integer(1, 24 * 60).default(10),
-    PREDICTION_THRESHOLD: number(0, 1).default(0.15),
-    PREDICTION_TOP_K: integer(1, 200).default(20),
+    IDLE_THRESHOLD_MINUTES: integer(1, 24 * 60, 10),
+    MIN_TRIP_MINUTES: integer(1, 24 * 60, 10),
+    PREDICTION_THRESHOLD: number(0, 1, 0.15),
+    PREDICTION_TOP_K: integer(1, 200, 20),
   })
   .superRefine((env, ctx) => {
     if (env.LLM_PROVIDER === "digitalocean") {
