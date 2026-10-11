@@ -1,0 +1,10 @@
+allowBuilds:
+  esbuild: false
+  sharp: false
+  unrs-resolver: false
+# Narrow exceptions to the global trustPolicy=no-downgrade. These are old-line
+# patch releases published after newer majors (so they lack provenance), pulled in
+# transitively. Review when upgrading.
+trustPolicyExclude:
+  - eslint-import-resolver-typescript@3.10.1
+  - semver@6.3.1

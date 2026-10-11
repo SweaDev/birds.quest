@@ -26,7 +26,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Phase 1: Foundation
 
-- [ ] T1.1 Scaffold Next.js (App Router, TypeScript strict, ESLint) with pnpm at the repo root. Keep `specs/`, `LICENSE` and `README.md`.
+- [x] T1.1 Scaffold Next.js (App Router, TypeScript strict, ESLint) with pnpm at the repo root. Keep `specs/`, `LICENSE` and `README.md`.
 - [ ] T1.2 Add Vitest, and scripts `lint`, `typecheck`, `test`, `build`, `worker`, `db:generate`, `db:migrate`.
 - [ ] T1.3 Add a validated config module (zod) and `.env.example`: DB URLs (app RW, Traccar RO), LLM provider and key and model, admin password hash, session secret, idle threshold, minimum trip minutes, prediction threshold and top-K.
 - [ ] T1.4 Add Drizzle ORM (MariaDB) and the schema: `trips`, `predictions`, `species_info`, `posts`, `post_species`, `jobs`, `admin_sessions`. Unique source key on `trips`. Generate the initial migration.
