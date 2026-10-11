@@ -6,9 +6,13 @@ import * as schema from "./schema";
 export { closeAllPools } from "./pool";
 export * as schema from "./schema";
 
-// App database (read/write). The client is created lazily on first use.
-export function getDb() {
-  return drizzle(getPool(getConfig().databaseUrl), { schema, mode: "default" });
+export function createDb(url: string) {
+  return drizzle(getPool(url), { schema, mode: "default" });
 }
 
-export type Db = ReturnType<typeof getDb>;
+export type Db = ReturnType<typeof createDb>;
+
+// App database (read/write). The client is created lazily on first use.
+export function getDb(): Db {
+  return createDb(getConfig().databaseUrl);
+}

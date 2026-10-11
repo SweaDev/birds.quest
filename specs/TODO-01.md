@@ -35,7 +35,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Phase 2: Pipeline
 
-- [ ] T2.1 Trip discovery (`src/lib/trips.ts`, `traccar.ts`): split positions into trips by idle gap or motion, accept only ended trips (last position older than the idle threshold), ignore trips under 10 minutes, insert idempotently, enqueue a `predict` job.
+- [x] T2.1 Trip discovery (`src/lib/trips.ts`, `traccar.ts`): split positions into trips by idle gap or motion, accept only ended trips (last position older than the idle threshold), ignore trips under 10 minutes, insert idempotently, enqueue a `predict` job.
 - [ ] T2.2 Tests for trip splitting: 9 min ignored, 11 min accepted, ongoing trip not processed, re-run is idempotent.
 - [ ] T2.3 DB-backed queue (`src/lib/queue.ts`): claim with `FOR UPDATE SKIP LOCKED`, retries with backoff, stale lock recovery, job types `discover`, `predict`, `generate`. Tests included.
 - [ ] T2.4 Worker entry `worker/run.ts`: enqueue `discover`, then drain the queue once and exit with a clear log. Wire `pnpm worker`.
