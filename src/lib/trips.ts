@@ -163,7 +163,7 @@ export async function discoverTrips(
   // Also covers a crash between inserting a trip and enqueueing its job.
   const waiting = await db.select({ id: trips.id }).from(trips).where(eq(trips.status, "discovered"));
   for (const { id } of waiting) {
-    await enqueueJob(db, { type: "predict", payload: { tripId: id }, dedupeKey: `predict:${id}` });
+    await enqueueJob(db, { type: "predict", payload: { tripId: id }, dedupeKey: `predict:${id}`, runAfter: now });
   }
   return summary;
 }

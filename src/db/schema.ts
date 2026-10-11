@@ -29,7 +29,7 @@ const updatedAt = () =>
 
 export const TRIP_STATUSES = ["discovered", "predicted", "generated", "failed"] as const;
 export const POST_STATUSES = ["draft", "published"] as const;
-export const JOB_TYPES = ["discover", "predict", "generate"] as const;
+export const JOB_TYPES = ["discover", "predict", "enrich", "generate"] as const;
 export const JOB_STATUSES = ["pending", "running", "done", "failed"] as const;
 
 // Trips are derived from Traccar positions. Coordinates stay in this table
