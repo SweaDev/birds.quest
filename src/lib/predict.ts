@@ -80,6 +80,7 @@ export type PredictDeps = {
   source: PositionSource;
   model: () => Promise<SpeciesModel>;
   options: SelectOptions;
+  now?: Date;
 };
 
 /** `predict` job: stores the likely species for a trip, then queues enrichment. */
@@ -118,7 +119,12 @@ export async function predictTrip(db: Db, tripId: number, deps: PredictDeps): Pr
       .where(and(eq(trips.id, tripId), eq(trips.status, "discovered")));
   });
 
-  await enqueueJob(db, { type: "enrich", payload: { tripId }, dedupeKey: `enrich:${tripId}` });
+  await enqueueJob(db, {
+    type: "enrich",
+    payload: { tripId },
+    dedupeKey: `enrich:${tripId}`,
+    runAfter: deps.now ?? new Date(),
+  });
   return selected;
 }
 

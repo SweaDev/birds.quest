@@ -21,6 +21,8 @@ const number = (min: number, max: number, fallback: number) =>
 const integer = (min: number, max: number, fallback: number) =>
   z.preprocess(blankToUndefined, z.coerce.number().int().min(min).max(max).default(fallback));
 
+const DEFAULT_WIKIPEDIA_USER_AGENT = "birds.quest/0.1 (bird watching blog; https://birds.quest)";
+
 const LLM_DEFAULTS = {
   ollama: {
     baseUrl: "http://localhost:11434/v1",
@@ -59,6 +61,9 @@ const envSchema = z
     MIN_TRIP_MINUTES: integer(1, 24 * 60, 10),
     PREDICTION_THRESHOLD: number(0, 1, 0.15),
     PREDICTION_TOP_K: integer(1, 200, 20),
+
+    // Wikimedia asks API clients to identify themselves, ideally with contact details.
+    WIKIPEDIA_USER_AGENT: optional(z.string().min(1)),
   })
   .superRefine((env, ctx) => {
     if (env.LLM_PROVIDER === "digitalocean") {
@@ -95,6 +100,7 @@ export type Config = {
   minTripMinutes: number;
   predictionThreshold: number;
   predictionTopK: number;
+  wikipediaUserAgent: string;
 };
 
 export class ConfigError extends Error {
@@ -129,6 +135,7 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
     minTripMinutes: e.MIN_TRIP_MINUTES,
     predictionThreshold: e.PREDICTION_THRESHOLD,
     predictionTopK: e.PREDICTION_TOP_K,
+    wikipediaUserAgent: e.WIKIPEDIA_USER_AGENT ?? DEFAULT_WIKIPEDIA_USER_AGENT,
   };
 }
 

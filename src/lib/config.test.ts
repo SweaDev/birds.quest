@@ -15,6 +15,7 @@ describe("parseConfig", () => {
     expect(config.minTripMinutes).toBe(10);
     expect(config.predictionThreshold).toBe(0.15);
     expect(config.predictionTopK).toBe(20);
+    expect(config.wikipediaUserAgent).toMatch(/^birds\.quest\//);
     expect(config.traccarAdminDatabaseUrl).toBeUndefined();
     expect(config.llm).toEqual({
       provider: "ollama",
@@ -44,12 +45,14 @@ describe("parseConfig", () => {
       MIN_TRIP_MINUTES: "12",
       PREDICTION_THRESHOLD: "0.3",
       PREDICTION_TOP_K: "8",
+      WIKIPEDIA_USER_AGENT: "me/1 (me@example.com)",
     });
     expect(config).toMatchObject({
       idleThresholdMinutes: 15,
       minTripMinutes: 12,
       predictionThreshold: 0.3,
       predictionTopK: 8,
+      wikipediaUserAgent: "me/1 (me@example.com)",
     });
   });
 

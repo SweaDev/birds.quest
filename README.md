@@ -31,6 +31,7 @@ GRANT SELECT ON traccar.* TO 'birdsquest_ro'@'127.0.0.1';
 Then:
 
 ```sh
+pnpm models:download   # BirdNET geomodel (ONNX, labels, licence) into models/, checksum verified
 pnpm db:migrate   # apply migrations to DATABASE_URL
 pnpm db:seed      # fake Traccar tables and walks (needs TRACCAR_ADMIN_DATABASE_URL)
 pnpm dev
@@ -42,7 +43,19 @@ pnpm dev
 | `pnpm db:generate` | Generate a migration after editing `src/db/schema.ts` |
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Seed fake Traccar data (dev only) |
+| `pnpm models:download` | Download the BirdNET geomodel files into `models/` |
 | `pnpm worker` | Run one worker pass: discover trips, then drain the job queue and exit |
+
+## Pipeline
+
+`pnpm worker` runs one pass and exits: it enqueues a `discover` job, then drains the job queue.
+
+1. `discover` finds ended trips in Traccar's positions (a gap or standstill of `IDLE_THRESHOLD_MINUTES` ends a trip; trips shorter than `MIN_TRIP_MINUTES` are ignored).
+2. `predict` samples the route (about every 300 m), runs the GeoModel for the trip's mid-time week, and keeps birds above `PREDICTION_THRESHOLD` (top `PREDICTION_TOP_K`).
+3. `enrich` caches Wikipedia text and licensed images per species.
+4. `generate` writes the draft post (not implemented yet).
+
+Tests that need MariaDB use the `<database>_test` database (or `TEST_DATABASE_URL`) and truncate its tables.
 
 The database smoke test (`src/db/db.smoke.test.ts`) runs only when `DATABASE_URL` and `TRACCAR_DATABASE_URL` are set.
 

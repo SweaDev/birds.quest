@@ -22,17 +22,19 @@ describe.skipIf(!hasTestDb)("runWorkerOnce (database)", () => {
     listDeviceIds: async () => [1],
     positions: async (_id, q = {}) => positions.filter((p) => !q.after || p.fixTime > q.after),
   };
-  const deps = { db, source, now: () => now, log: () => {}, config: { idleThresholdMinutes: 10, minTripMinutes: 10, predictionThreshold: 0.15, predictionTopK: 20 }, model: async () => ({ species: [], predict: async () => [] }) };
+  const deps = { db, source, now: () => now, log: () => {}, config: { idleThresholdMinutes: 10, minTripMinutes: 10, predictionThreshold: 0.15, predictionTopK: 20, wikipediaUserAgent: "test" }, wiki: { lookupSpecies: async () => null }, model: async () => ({ species: [], predict: async () => [] }) };
 
-  it("discovers trips, predicts them and exits when the queue is drained", async () => {
+  it("discovers trips, predicts and enriches them, then exits when the queue is drained", async () => {
     const summary = await runWorkerOnce(deps);
-    expect(summary).toMatchObject({ processed: 2, succeeded: 2, failed: 0 });
+    expect(summary).toMatchObject({ processed: 3, succeeded: 3, failed: 0 });
     expect(await db.select().from(trips)).toMatchObject([{ status: "predicted" }]);
     const [predict] = await db.select().from(jobs).where(eq(jobs.type, "predict"));
     expect(predict.status).toBe("done");
-    // No enrich handler is registered yet, so that job waits for it.
     const [enrich] = await db.select().from(jobs).where(eq(jobs.type, "enrich"));
-    expect(enrich.status).toBe("pending");
+    expect(enrich.status).toBe("done");
+    // No generate handler is registered yet, so that job waits for it.
+    const [generate] = await db.select().from(jobs).where(eq(jobs.type, "generate"));
+    expect(generate.status).toBe("pending");
   });
 
   it("can run repeatedly without duplicating trips or jobs", async () => {
