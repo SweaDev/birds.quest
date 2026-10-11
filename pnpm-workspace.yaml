@@ -1,5 +1,7 @@
 allowBuilds:
   esbuild: false
+  # Only downloads optional CUDA binaries; the CPU runtime ships inside the package.
+  onnxruntime-node: false
   sharp: false
   unrs-resolver: false
 # Narrow exceptions to the global trustPolicy=no-downgrade. These are old-line
