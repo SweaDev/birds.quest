@@ -37,8 +37,8 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 - [x] T2.1 Trip discovery (`src/lib/trips.ts`, `traccar.ts`): split positions into trips by idle gap or motion, accept only ended trips (last position older than the idle threshold), ignore trips under 10 minutes, insert idempotently, enqueue a `predict` job. (7a5d3e0)
 - [x] T2.2 Tests for trip splitting: 9 min ignored, 11 min accepted, ongoing trip not processed, re-run is idempotent. (753da78)
-- [x] T2.3 DB-backed queue (`src/lib/queue.ts`): claim with `FOR UPDATE SKIP LOCKED`, retries with backoff, stale lock recovery, job types `discover`, `predict`, `generate`. Tests included.
-- [ ] T2.4 Worker entry `worker/run.ts`: enqueue `discover`, then drain the queue once and exit with a clear log. Wire `pnpm worker`.
+- [x] T2.3 DB-backed queue (`src/lib/queue.ts`): claim with `FOR UPDATE SKIP LOCKED`, retries with backoff, stale lock recovery, job types `discover`, `predict`, `generate`. Tests included. (46a4d90)
+- [x] T2.4 Worker entry `worker/run.ts`: enqueue `discover`, then drain the queue once and exit with a clear log. Wire `pnpm worker`.
 - [ ] T2.5 Model download script `scripts/download-models.ts`: fetch `geomodel_fp16.onnx`, `labels.txt` and the licence from the BirdNET geomodel release (confirm the URL). Verify size or checksum. Output goes to the gitignored `models/`.
 - [ ] T2.6 GeoModel wrapper (`src/lib/geomodel.ts`) with `onnxruntime-node`: input `(N,3)` float32 `[lat, lon, week]` (input name `input`), parse `labels.txt` (code, scientific, common), batch inference.
 - [ ] T2.7 Prediction job: compute week 1-48 from the trip mid-time, sample route points about every few hundred metres, aggregate per species, apply threshold and top-K, store in `predictions`, enqueue enrichment and generation. Tests include a sample check (lat 52.5, lon 13.4, week 22 gives Eurasian Blackbird and Great Tit near the top).

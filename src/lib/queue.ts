@@ -1,4 +1,4 @@
-import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lt, lte, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import { jobs, type Job, type JobType } from "@/db/schema";
 
@@ -50,12 +50,12 @@ export async function enqueueJob(db: Db, input: EnqueueInput): Promise<void> {
  * Atomically takes the next due job. `FOR UPDATE SKIP LOCKED` lets several
  * workers claim concurrently without ever receiving the same row.
  */
-export async function claimNextJob(db: Db, now: Date = new Date()): Promise<Job | null> {
+export async function claimNextJob(db: Db, now: Date = new Date(), types?: JobType[]): Promise<Job | null> {
   return db.transaction(async (tx) => {
     const [row] = await tx
       .select()
       .from(jobs)
-      .where(and(eq(jobs.status, "pending"), lte(jobs.runAfter, now)))
+      .where(and(eq(jobs.status, "pending"), lte(jobs.runAfter, now), types ? inArray(jobs.type, types) : undefined))
       .orderBy(asc(jobs.runAfter), asc(jobs.id))
       .limit(1)
       .for("update", { skipLocked: true });
@@ -111,7 +111,10 @@ export async function recoverStaleJobs(db: Db, now: Date, staleLockMs = DEFAULT_
   return result.affectedRows;
 }
 
-/** Runs due jobs until none are left, then returns. Failed jobs wait for their backoff. */
+/**
+ * Runs due jobs until none are left, then returns. Failed jobs wait for their backoff.
+ * Only job types that have a handler are claimed; others stay pending.
+ */
 export async function runQueue(db: Db, handlers: JobHandlers, options: QueueOptions = {}): Promise<RunSummary> {
   const now = options.now ?? (() => new Date());
   const log = options.log ?? (() => {});
@@ -120,20 +123,21 @@ export async function runQueue(db: Db, handlers: JobHandlers, options: QueueOpti
   summary.recovered = await recoverStaleJobs(db, now(), options.staleLockMs);
   if (summary.recovered > 0) log(`recovered ${summary.recovered} stale job(s)`);
 
+  const types = (Object.keys(handlers) as JobType[]).filter((type) => handlers[type]);
+  if (types.length === 0) return summary;
+
   for (;;) {
-    const job = await claimNextJob(db, now());
+    const job = await claimNextJob(db, now(), types);
     if (!job) break;
     summary.processed++;
 
-    const handler = handlers[job.type];
     try {
-      if (!handler) throw new NoHandlerError(job.type);
-      await handler(job, { db });
+      await handlers[job.type]!(job, { db });
       await completeJob(db, job.id);
       summary.succeeded++;
       log(`job ${job.id} (${job.type}) done`);
     } catch (error) {
-      const outcome = await failJob(db, job, error, now(), { permanent: error instanceof NoHandlerError });
+      const outcome = await failJob(db, job, error, now());
       if (outcome === "retry") summary.retried++;
       else summary.failed++;
       log(`job ${job.id} (${job.type}) ${outcome === "retry" ? "will retry" : "failed"}: ${(error as Error).message}`);
@@ -142,8 +146,9 @@ export async function runQueue(db: Db, handlers: JobHandlers, options: QueueOpti
   return summary;
 }
 
-class NoHandlerError extends Error {
-  constructor(type: string) {
-    super(`No handler registered for job type "${type}"`);
-  }
+/** Deletes finished jobs older than the given number of days. */
+export async function pruneJobs(db: Db, now: Date, olderThanDays = 30): Promise<number> {
+  const cutoff = new Date(now.getTime() - olderThanDays * 24 * 60 * 60_000);
+  const [result] = await db.delete(jobs).where(and(eq(jobs.status, "done"), lt(jobs.updatedAt, cutoff)));
+  return result.affectedRows;
 }

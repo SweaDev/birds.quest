@@ -7,6 +7,7 @@ import {
   claimNextJob,
   enqueueJob,
   failJob,
+  pruneJobs,
   recoverStaleJobs,
   runQueue,
 } from "./queue";
@@ -136,13 +137,13 @@ describe.skipIf(!hasTestDb)("queue (database)", () => {
       expect(predict).toMatchObject({ status: "pending", lastError: "model missing" });
     });
 
-    it("fails jobs without a handler permanently", async () => {
+    it("leaves jobs without a handler pending", async () => {
       await enqueueJob(db, { type: "generate", runAfter: after(-1000) });
-      const summary = await runQueue(db, {}, { now: () => t0 });
-      expect(summary.failed).toBe(1);
-      const [job] = await db.select().from(jobs);
-      expect(job.status).toBe("failed");
-      expect(job.lastError).toContain("generate");
+      await enqueueJob(db, { type: "predict", runAfter: after(-1000) });
+      const summary = await runQueue(db, { predict: async () => {} }, { now: () => t0 });
+      expect(summary).toMatchObject({ processed: 1, succeeded: 1 });
+      const [generate] = await db.select().from(jobs).where(eq(jobs.type, "generate"));
+      expect(generate).toMatchObject({ status: "pending", attempts: 0 });
     });
 
     it("recovers stale jobs before draining", async () => {
@@ -156,5 +157,16 @@ describe.skipIf(!hasTestDb)("queue (database)", () => {
       expect(summary.recovered).toBe(1);
       expect(ran).toEqual([2]);
     });
+  });
+
+  it("prunes old finished jobs only", async () => {
+    await enqueueJob(db, { type: "discover", runAfter: after(-1000) });
+    await enqueueJob(db, { type: "predict", runAfter: after(-1000) });
+    await runQueue(db, { discover: async () => {} }, { now: () => t0 });
+    const [done] = await db.select().from(jobs).where(eq(jobs.status, "done"));
+    await db.update(jobs).set({ updatedAt: after(-40 * 24 * 60 * 60_000) }).where(eq(jobs.id, done.id));
+
+    expect(await pruneJobs(db, t0, 30)).toBe(1);
+    expect(await db.select().from(jobs)).toHaveLength(1);
   });
 });

@@ -42,7 +42,7 @@ pnpm dev
 | `pnpm db:generate` | Generate a migration after editing `src/db/schema.ts` |
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Seed fake Traccar data (dev only) |
-| `pnpm worker` | Run the job worker once (not implemented yet) |
+| `pnpm worker` | Run one worker pass: discover trips, then drain the job queue and exit |
 
 The database smoke test (`src/db/db.smoke.test.ts`) runs only when `DATABASE_URL` and `TRACCAR_DATABASE_URL` are set.
 
