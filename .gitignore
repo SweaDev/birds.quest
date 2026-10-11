@@ -1,2 +1,4 @@
 *.log
-specs
+node_modules
+dist
+.env
