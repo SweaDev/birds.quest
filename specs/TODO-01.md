@@ -22,7 +22,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
   - Note: MariaDB is NOT installed locally and Docker is broken (see Changelog). Provision it before T1.4/T1.6.
 - [x] T0.2 Find and install agent skills for React and Next.js best practices (required by the spec). Also install skills for TypeScript, web security and Drizzle/MariaDB if available. Record the skill names here. (279d268)
   - Installed (project-level, `.agents/skills/`, tracked in `skills-lock.json`, via `npx skills add -a github-copilot`): `vercel-react-best-practices` (vercel-labs/agent-skills), `nextjs-app-router-patterns` (wshobson/agents), `typescript-advanced-types` (wshobson/agents), `security-best-practices` (openai/skills), `drizzle-orm-patterns` (giuseppe-trisciuoglio/developer-kit), `mysql` (planetscale/database-skills, covers MariaDB-compatible MySQL).
-- [x] T0.3 Add `.gitignore` (node_modules, `.next`, `.env*` except `.env.example`, `models/*.onnx`, `models/labels.txt`, logs).
+- [x] T0.3 Add `.gitignore` (node_modules, `.next`, `.env*` except `.env.example`, `models/*.onnx`, `models/labels.txt`, logs). (279d268)
 
 ## Phase 1: Foundation
 
