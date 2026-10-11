@@ -31,7 +31,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] T1.3 Add a validated config module (zod) and `.env.example`: DB URLs (app RW, Traccar RO), LLM provider and key and model, admin password hash, session secret, idle threshold, minimum trip minutes, prediction threshold and top-K. (6d78093)
 - [x] T1.4 Add Drizzle ORM (MariaDB) and the schema: `trips`, `predictions`, `species_info`, `posts`, `post_species`, `jobs`, `admin_sessions`. Unique source key on `trips`. Generate the initial migration. (6c1bb2d)
 - [x] T1.5 Add a read-only Traccar DB client (`tc_devices`, `tc_positions`) and a dev seed script that creates fake Traccar tables and positions for local testing. (d14d108)
-- [x] T1.6 Tests: config validation and DB connection smoke test.
+- [x] T1.6 Tests: config validation and DB connection smoke test. (80707ca)
 
 ## Phase 2: Pipeline
 
