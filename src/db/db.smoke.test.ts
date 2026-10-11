@@ -36,6 +36,11 @@ describe.skipIf(!hasDb)("database smoke test", () => {
     expect(value.toISOString()).toBe("2026-01-02T03:04:05.678Z");
   });
 
+  it("uses a UTC session time zone", async () => {
+    const [rows] = await getPool(process.env.DATABASE_URL!).query("SELECT @@session.time_zone AS tz");
+    expect((rows as { tz: string }[])[0].tz).toBe("+00:00");
+  });
+
   it("reads Traccar positions", async () => {
     const rows = await getTraccarDb().select({ id: tcPositions.id }).from(tcPositions).limit(1);
     expect(Array.isArray(rows)).toBe(true);

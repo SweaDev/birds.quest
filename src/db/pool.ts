@@ -9,6 +9,10 @@ export function getPool(url: string, connectionLimit = 5): Pool {
   if (!pool) {
     // `timezone: "Z"` makes DATETIME/TIMESTAMP values round-trip as UTC.
     pool = createPool({ uri: url, timezone: "Z", connectionLimit });
+    // Server-side NOW()/CURRENT_TIMESTAMP defaults must also be UTC.
+    pool.pool.on("connection", (connection: { query: (sql: string) => unknown }) => {
+      connection.query("SET time_zone = '+00:00'");
+    });
     pools.set(url, pool);
   }
   return pool;
