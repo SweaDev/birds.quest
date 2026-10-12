@@ -126,6 +126,32 @@ Some things I learned about using Gemma for this:
 - **I don't trust the reply.** Wikipedia sentences that name countries, cities and so on are dropped before prompting and again from the output. A reply containing coordinates, map names or URLs is thrown away completely. The model can't add images or links either, because my code adds those.
 - **There's always a fallback.** If the LLM times out or fails the checks, a plain template writes the post, so a flaky call never means a missing entry.
 
+## Building It with GitHub Copilot
+
+Birds.Quest was built almost entirely by GitHub Copilot, and I tried to be deliberate about *how*. I stayed in the role of the person who decides what to build and checks the result, and let Copilot do the typing. The workflow had four stages, and every stage leaves a file in the repo you can read:
+
+1. **I wrote the spec by hand.** [`specs/SPEC-01.md`](https://github.com/SweaDev/birds.quest/blob/main/specs/SPEC-01.md) is 45 lines of my own words: the goal, the big picture, the security rule (no location data to the LLM or the blog), the tech stack and some references. Nothing in it was generated, so the intent stayed mine.
+2. **Copilot `/plan` mode turned the spec into a plan.** [`specs/PLAN-01.md`](https://github.com/SweaDev/birds.quest/blob/main/specs/PLAN-01.md) is the approach it proposed. I read it before any code was written. Planning before coding saved me from the "agent runs off in the wrong direction for an hour" problem.
+3. **Agent mode turned the plan into a checklist.** [`specs/TODO-01.md`](https://github.com/SweaDev/birds.quest/blob/main/specs/TODO-01.md) is a 36-task execution tracker. It also contains the *rules for the agent itself*, which I think is the most useful part:
+   - Work top to bottom, one task at a time, and mark it `[~]` while in progress and `[x]` when verified.
+   - Make one commit per task (`git add -A && git commit -m "<task id>: <summary>"`) and never push. That is why the history reads like a build log, and why I could review or revert any single step.
+   - If a task turns out to be wrong or too big, edit the TODO and note why in a changelog instead of silently improvising.
+   - Install the relevant agent skills before the work they apply to. My spec required it, so Copilot installed six project-level skills for React/Next.js, TypeScript, web security and Drizzle/MySQL (`npx skills add -a github-copilot`).
+   - Never commit secrets, keep `README.md` and `.env.example` up to date, and never let coordinates or place names reach the prompt or the blog.
+4. **Agent mode implemented the checklist, step by step.** I pointed it at `TODO-01.md` and let it work through the tasks. The security rule in the spec became a test that checks no coordinates or place names reach the prompt, so Copilot couldn't quietly break the one promise the project makes. It finished with lint, typecheck, 208 passing tests and a clean production build.
+
+### Working in parallel with a git worktree
+
+Agent runs take a while, and I didn't want to sit and watch. I created a **git worktree** so Copilot kept building in one working directory while I wrote the first draft of this post (`POST.md`) in another, on a separate branch. We never touched the same files, so there were no conflicts and no stashing. When the app was finished, I asked Copilot to read the generated `README.md` and use it to enrich the draft, so the architecture and setup details in this post match what the code actually does.
+
+### Setup and honest notes
+
+- **Model:** Claude Sonnet 5.5 with the default High thinking setting, used for planning, task breakdown and implementation.
+- **Tools used:** `/plan` mode and Agent mode, plus project skills for Next.js, Drizzle, MySQL, TypeScript and security best practices.
+- **What worked:** a hand-written spec, a plan I reviewed, and a TODO with strict rules. The agent had a clear definition of "done" for every task, and I got a reviewable commit at every step.
+- **What it cost:** this was a lot of agent work, and I used up almost all of my monthly Copilot quota doing it. 😅 Worth it, though.
+- **What I still did myself:** the idea, the spec, reviewing the plan, and the privacy decisions. I also ran a real GPS track through the pipeline and read the species list to check it made sense.
+
 ## Why Does Open Innovation Matter?
 
 I want the same model on my laptop and on my server.
@@ -138,3 +164,4 @@ The same goes for the rest of the stack. BirdNET's GeoModel is open, so I can ru
 
 - **Best Use of DigitalOcean:** the whole production deployment runs on a DigitalOcean Droplet (Traccar, MariaDB, Caddy, the Next.js app, the worker timer and git-push deploys), and post generation goes through DigitalOcean Serverless Inference.
 - **Best Use of Gemma:** Gemma 4 E2B for local development and Gemma 4 31B in production write every post, behind a prompt and output filter designed so that no location data ever reaches the model.
+- **Best Use of GitHub Copilot:** Copilot wrote the project, with a workflow I could review. I wrote the spec by hand, `/plan` mode produced the plan, Agent mode produced a 36-task TODO with rules for the agent (one commit per task, no pushing, never leak location data), and Agent mode then implemented it task by task. I used a git worktree to write this post while Copilot kept building, then had Copilot enrich the draft from the generated README. All of it used Claude Sonnet 5.5, and it ate almost my whole monthly quota. See [Building It with GitHub Copilot](#building-it-with-github-copilot).
