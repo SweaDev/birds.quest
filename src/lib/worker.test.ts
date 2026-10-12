@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { jobs, trips } from "@/db/schema";
+import { jobs, posts, trips } from "@/db/schema";
 import { getTestDb, hasTestDb, resetTestDb } from "@/test/db";
 import { walk } from "../../scripts/seed-data";
 import type { PositionSource } from "./traccar";
@@ -22,19 +22,34 @@ describe.skipIf(!hasTestDb)("runWorkerOnce (database)", () => {
     listDeviceIds: async () => [1],
     positions: async (_id, q = {}) => positions.filter((p) => !q.after || p.fixTime > q.after),
   };
-  const deps = { db, source, now: () => now, log: () => {}, config: { idleThresholdMinutes: 10, minTripMinutes: 10, predictionThreshold: 0.15, predictionTopK: 20, wikipediaUserAgent: "test" }, wiki: { lookupSpecies: async () => null }, model: async () => ({ species: [], predict: async () => [] }) };
+  const deps = {
+    db,
+    source,
+    now: () => now,
+    log: () => {},
+    config: {
+      idleThresholdMinutes: 10,
+      minTripMinutes: 10,
+      predictionThreshold: 0.15,
+      predictionTopK: 20,
+      wikipediaUserAgent: "test",
+      llm: { provider: "ollama" as const, baseUrl: "http://unused", model: "unused" },
+    },
+    wiki: { lookupSpecies: async () => null },
+    llm: { complete: async () => "# A title\n\nAn intro.\n\n## Great Tit\nA lively bird.\n\n## Final thoughts\nBye." },
+    model: async () => ({
+      species: [{ code: "gretit1", scientificName: "Parus major", commonName: "Great Tit" }],
+      predict: async (inputs: unknown[]) => inputs.map(() => new Float32Array([0.9])),
+    }),
+  };
 
-  it("discovers trips, predicts and enriches them, then exits when the queue is drained", async () => {
+  it("runs the whole pipeline to a draft post, then exits when the queue is drained", async () => {
     const summary = await runWorkerOnce(deps);
-    expect(summary).toMatchObject({ processed: 3, succeeded: 3, failed: 0 });
-    expect(await db.select().from(trips)).toMatchObject([{ status: "predicted" }]);
-    const [predict] = await db.select().from(jobs).where(eq(jobs.type, "predict"));
-    expect(predict.status).toBe("done");
-    const [enrich] = await db.select().from(jobs).where(eq(jobs.type, "enrich"));
-    expect(enrich.status).toBe("done");
-    // No generate handler is registered yet, so that job waits for it.
-    const [generate] = await db.select().from(jobs).where(eq(jobs.type, "generate"));
-    expect(generate.status).toBe("pending");
+    expect(summary).toMatchObject({ processed: 4, succeeded: 4, failed: 0 });
+    expect(await db.select().from(trips)).toMatchObject([{ status: "generated" }]);
+    const states = await db.select().from(jobs);
+    expect(states.every((j) => j.status === "done")).toBe(true);
+    expect(await db.select().from(posts)).toMatchObject([{ status: "draft", title: "A title" }]);
   });
 
   it("can run repeatedly without duplicating trips or jobs", async () => {

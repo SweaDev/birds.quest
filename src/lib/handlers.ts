@@ -1,6 +1,8 @@
 import type { Config } from "./config";
 import { enrichTrip } from "./enrich";
 import { getGeoModel } from "./geomodel";
+import { createLlmClient, type LlmClient } from "./llm";
+import { generatePost, parseGenerateJob } from "./posts";
 import { predictTrip, tripIdFromJob, type SpeciesModel } from "./predict";
 import type { JobHandlers } from "./queue";
 import type { PositionSource } from "./traccar";
@@ -10,20 +12,23 @@ import { WikipediaClient } from "./wikipedia";
 export type HandlerDeps = {
   config: Pick<
     Config,
-    "idleThresholdMinutes" | "minTripMinutes" | "predictionThreshold" | "predictionTopK" | "wikipediaUserAgent"
+    "idleThresholdMinutes" | "minTripMinutes" | "predictionThreshold" | "predictionTopK" | "wikipediaUserAgent" | "llm"
   >;
   source: PositionSource;
   model?: () => Promise<SpeciesModel>;
   wiki?: Pick<WikipediaClient, "lookupSpecies">;
+  llm?: LlmClient;
+  log?: (message: string) => void;
   now?: () => Date;
 };
 
-// The generate handler is registered here once implemented.
 export function buildHandlers({
   config,
   source,
   model = getGeoModel,
   wiki = new WikipediaClient({ userAgent: config.wikipediaUserAgent }),
+  llm = createLlmClient(config.llm),
+  log,
   now = () => new Date(),
 }: HandlerDeps): JobHandlers {
   return {
@@ -45,6 +50,9 @@ export function buildHandlers({
     },
     enrich: async (job, { db }) => {
       await enrichTrip(db, tripIdFromJob(job), wiki, now());
+    },
+    generate: async (job, { db }) => {
+      await generatePost(db, parseGenerateJob(job), { llm, now: now(), log });
     },
   };
 }

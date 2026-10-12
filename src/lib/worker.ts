@@ -13,7 +13,7 @@ export async function runWorkerOnce({ db, log = console.log, ...deps }: WorkerDe
   if (pruned > 0) log(`worker: pruned ${pruned} old job(s)`);
 
   await enqueueJob(db, { type: "discover", runAfter: now() });
-  const summary = await runQueue(db, buildHandlers(deps), { now, log: (m) => log(`worker: ${m}`) });
+  const summary = await runQueue(db, buildHandlers({ ...deps, log }), { now, log: (m) => log(`worker: ${m}`) });
 
   log(
     `worker: finished, ${summary.processed} job(s) processed ` +

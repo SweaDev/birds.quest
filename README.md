@@ -53,7 +53,7 @@ pnpm dev
 1. `discover` finds ended trips in Traccar's positions (a gap or standstill of `IDLE_THRESHOLD_MINUTES` ends a trip; trips shorter than `MIN_TRIP_MINUTES` are ignored).
 2. `predict` samples the route (about every 300 m), runs the GeoModel for the trip's mid-time week, and keeps birds above `PREDICTION_THRESHOLD` (top `PREDICTION_TOP_K`).
 3. `enrich` caches Wikipedia text and licensed images per species.
-4. `generate` writes the draft post (not implemented yet).
+4. `generate` asks the LLM for a post from species, Wikipedia facts and the time of year only (no coordinates or place names), checks the reply for location words, and saves a draft. If the LLM fails, a template post is used.
 
 Tests that need MariaDB use the `<database>_test` database (or `TEST_DATABASE_URL`) and truncate its tables.
 
