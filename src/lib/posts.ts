@@ -40,6 +40,8 @@ export type GenerateInput = {
 export type GenerateDeps = {
   llm: LlmClient;
   now?: Date;
+  /** Publish newly created posts at once. Regenerating an existing post never changes its publish state. */
+  autoPublish?: boolean;
   log?: (message: string) => void;
 };
 
@@ -332,7 +334,7 @@ export function parseGenerateJob(job: Pick<Job, "payload" | "type">): GenerateIn
   };
 }
 
-/** `generate` job: writes (or, with `force`, rewrites) the draft post for a trip. */
+/** `generate` job: writes (or, with `force`, rewrites) the post (a draft unless `autoPublish`) for a trip. */
 export async function generatePost(db: Db, input: GenerateInput, deps: GenerateDeps): Promise<GenerateResult> {
   const now = deps.now ?? new Date();
   const log = deps.log ?? (() => {});
@@ -393,7 +395,8 @@ export async function generatePost(db: Db, input: GenerateInput, deps: GenerateD
         tripId,
         title: built.title,
         markdown: built.markdown,
-        status: "draft",
+        status: deps.autoPublish ? "published" : "draft",
+        publishedAt: deps.autoPublish ? now : null,
         generatedAt: now,
       });
       id = result.insertId;

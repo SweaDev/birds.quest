@@ -33,6 +33,7 @@ describe.skipIf(!hasTestDb)("runWorkerOnce (database)", () => {
       predictionThreshold: 0.15,
       predictionTopK: 20,
       wikipediaUserAgent: "test",
+      autoPublish: false,
       llm: { provider: "ollama" as const, baseUrl: "http://unused", model: "unused" },
     },
     wiki: { lookupSpecies: async () => null },

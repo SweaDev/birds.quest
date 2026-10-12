@@ -57,6 +57,15 @@ describe("parseConfig", () => {
     });
   });
 
+  it("keeps posts as drafts unless AUTO_PUBLISH is switched on", () => {
+    expect(parseConfig(validEnv).autoPublish).toBe(false);
+    expect(parseConfig({ ...validEnv, AUTO_PUBLISH: "" }).autoPublish).toBe(false);
+    expect(parseConfig({ ...validEnv, AUTO_PUBLISH: "true" }).autoPublish).toBe(true);
+    expect(parseConfig({ ...validEnv, AUTO_PUBLISH: "1" }).autoPublish).toBe(true);
+    expect(parseConfig({ ...validEnv, AUTO_PUBLISH: "false" }).autoPublish).toBe(false);
+    expect(() => parseConfig({ ...validEnv, AUTO_PUBLISH: "yes" })).toThrow(/AUTO_PUBLISH/);
+  });
+
   it("accepts \\$-escaped argon2 hashes from .env files", () => {
     const config = parseConfig({
       ...validEnv,

@@ -21,6 +21,18 @@ const number = (min: number, max: number, fallback: number) =>
 const integer = (min: number, max: number, fallback: number) =>
   z.preprocess(blankToUndefined, z.coerce.number().int().min(min).max(max).default(fallback));
 
+const flag = (fallback: boolean) =>
+  z.preprocess(
+    (value) => {
+      const v = blankToUndefined(value);
+      return typeof v === "string" ? v.trim().toLowerCase() : v;
+    },
+    z
+      .enum(["true", "false", "1", "0"])
+      .default(fallback ? "true" : "false")
+      .transform((v) => v === "true" || v === "1"),
+  );
+
 const DEFAULT_WIKIPEDIA_USER_AGENT = "birds.quest/0.1 (bird watching blog; https://birds.quest)";
 
 const LLM_DEFAULTS = {
@@ -67,6 +79,9 @@ const envSchema = z
     PREDICTION_THRESHOLD: number(0, 1, 0.15),
     PREDICTION_TOP_K: integer(1, 200, 20),
 
+    // false (default): new posts are drafts that the owner publishes. true: publish on creation.
+    AUTO_PUBLISH: flag(false),
+
     // Wikimedia asks API clients to identify themselves, ideally with contact details.
     WIKIPEDIA_USER_AGENT: optional(z.string().min(1)),
   })
@@ -100,6 +115,7 @@ export type Config = {
   predictionThreshold: number;
   predictionTopK: number;
   wikipediaUserAgent: string;
+  autoPublish: boolean;
 };
 
 export class ConfigError extends Error {
@@ -136,6 +152,7 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
     predictionThreshold: e.PREDICTION_THRESHOLD,
     predictionTopK: e.PREDICTION_TOP_K,
     wikipediaUserAgent: e.WIKIPEDIA_USER_AGENT ?? DEFAULT_WIKIPEDIA_USER_AGENT,
+    autoPublish: e.AUTO_PUBLISH,
   };
 }
 

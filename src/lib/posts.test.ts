@@ -396,6 +396,18 @@ describe.skipIf(!hasTestDb)("generatePost (database)", () => {
     expect(JSON.stringify(llm.complete.mock.calls)).not.toContain("Great Tit");
   });
 
+  it("publishes a new post at once with autoPublish, but never changes an existing post", async () => {
+    const tripId = await seed();
+    await generatePost(db, { tripId }, { llm: stub(reply), now, autoPublish: true });
+    const [post] = await db.select().from(posts);
+    expect(post.status).toBe("published");
+    expect(post.publishedAt).toEqual(now);
+
+    await db.update(posts).set({ status: "draft", publishedAt: null });
+    await generatePost(db, { tripId, force: true }, { llm: stub(reply), now, autoPublish: true });
+    expect((await db.select().from(posts))[0].status).toBe("draft");
+  });
+
   it("uses the template when the LLM is down and still saves a draft", async () => {
     const tripId = await seed();
     const result = await generatePost(db, { tripId }, { llm: stub(new LlmError("down", true)), now });

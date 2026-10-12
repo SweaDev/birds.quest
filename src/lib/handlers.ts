@@ -12,7 +12,7 @@ import { WikipediaClient } from "./wikipedia";
 export type HandlerDeps = {
   config: Pick<
     Config,
-    "idleThresholdMinutes" | "minTripMinutes" | "predictionThreshold" | "predictionTopK" | "wikipediaUserAgent" | "llm"
+    "idleThresholdMinutes" | "minTripMinutes" | "predictionThreshold" | "predictionTopK" | "wikipediaUserAgent" | "llm" | "autoPublish"
   >;
   source: PositionSource;
   model?: () => Promise<SpeciesModel>;
@@ -52,7 +52,7 @@ export function buildHandlers({
       await enrichTrip(db, tripIdFromJob(job), wiki, now());
     },
     generate: async (job, { db }) => {
-      await generatePost(db, parseGenerateJob(job), { llm, now: now(), log });
+      await generatePost(db, parseGenerateJob(job), { llm, now: now(), log, autoPublish: config.autoPublish });
     },
   };
 }

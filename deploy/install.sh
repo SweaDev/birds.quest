@@ -174,6 +174,8 @@ ADMIN_PASSWORD_HASH='\\\$argon2id\\\$v=19\\\$m=65536,t=3,p=4\\\$REPLACE_ME\\\$RE
 LLM_PROVIDER=digitalocean
 LLM_API_KEY=
 WIKIPEDIA_USER_AGENT=birds.quest/0.1 (you@example.com)
+# false: new posts stay drafts until you publish them in /admin. true: publish automatically.
+AUTO_PUBLISH=false
 ENV
   umask 022
 fi

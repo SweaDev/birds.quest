@@ -54,6 +54,21 @@ pnpm dev
 - Security: nonce-based CSP and other headers in `src/proxy.ts`, argon2id password, httpOnly session cookie stored hashed in the database, CSRF token on every admin form, login rate limiting.
 - Set `SITE_URL` to the public address (canonical links, sitemap).
 
+## Architecture
+
+```
+Traccar Client ──HTTPS──> Caddy ──> Traccar ──> MariaDB (traccar DB)
+                                                   │ read-only
+                          worker (hourly) ─────────┘
+                            discover → predict → enrich → generate ──> MariaDB (birdsquest DB)
+                              │           │         │          └─ LLM (Ollama / DigitalOcean)
+                              │           │         └─ Wikipedia / Wikimedia
+                              │           └─ BirdNET GeoModel (ONNX, local)
+Next.js app (public blog + /admin) <───── MariaDB (birdsquest DB)
+```
+
+Everything lives in one repo: `src/lib/` (pipeline logic), `src/app/` (web), `worker/` (entry point), `deploy/` (server setup), `scripts/` (model download, seed). The job queue is a table in the app database.
+
 ## Pipeline
 
 `pnpm worker` runs one pass and exits: it enqueues a `discover` job, then drains the job queue.
@@ -61,7 +76,40 @@ pnpm dev
 1. `discover` finds ended trips in Traccar's positions (a gap or standstill of `IDLE_THRESHOLD_MINUTES` ends a trip; trips shorter than `MIN_TRIP_MINUTES` are ignored).
 2. `predict` samples the route (about every 300 m), runs the GeoModel for the trip's mid-time week, and keeps birds above `PREDICTION_THRESHOLD` (top `PREDICTION_TOP_K`).
 3. `enrich` caches Wikipedia text and licensed images per species.
-4. `generate` asks the LLM for a post from species, Wikipedia facts and the time of year only (no coordinates or place names), checks the reply for location words, and saves a draft. If the LLM fails, a template post is used.
+4. `generate` asks the LLM for a post from species, Wikipedia facts and the time of year only (no coordinates or place names), checks the reply for location words, and saves the post, as a draft by default (see [Publishing](#publishing)). If the LLM fails, a template post is used.
+
+### Publishing
+
+New posts are drafts: they only appear on the blog after you publish them in `/admin`. Once you trust the output, set `AUTO_PUBLISH=true` in `.env` (or `/etc/birdsquest/birdsquest.env` on the server) and restart the worker/web service; new posts are then published as soon as they are generated. Regenerating an existing post never changes whether it is published. The default (and any unset or empty value) is `false`.
+
+## Configuration
+
+All settings are environment variables, validated at startup by `src/lib/config.ts`. [.env.example](.env.example) documents each one.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | required | App database (read/write) |
+| `TRACCAR_DATABASE_URL` | required | Traccar database (read-only user) |
+| `TRACCAR_ADMIN_DATABASE_URL` | unset | Dev only, lets `pnpm db:seed` create fake Traccar tables |
+| `LLM_PROVIDER` | `ollama` | `ollama` (dev) or `digitalocean` (production) |
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_REASONING_EFFORT` | per provider | Override the provider defaults (`gemma4:e2b` / `gemma-4-31B-it`) |
+| `LLM_API_KEY` | unset | Required for `digitalocean` |
+| `ADMIN_PASSWORD_HASH` | required | From `pnpm admin:hash`, `$` escaped as `\$` |
+| `SESSION_SECRET` | required | At least 32 random characters |
+| `IDLE_THRESHOLD_MINUTES` / `MIN_TRIP_MINUTES` | `10` / `10` | Trip end and minimum length |
+| `PREDICTION_THRESHOLD` / `PREDICTION_TOP_K` | `0.15` / `20` | Species filter |
+| `AUTO_PUBLISH` | `false` | Publish new posts without approval |
+| `WIKIPEDIA_USER_AGENT` | built in | Sent to Wikimedia APIs, include a contact |
+| `SITE_URL` | `http://localhost:3000` | Public base URL |
+| `TEST_DATABASE_URL` | `<DATABASE_URL>_test` | Test database (tables are truncated) |
+
+## Privacy
+
+Location data (coordinates, place names) is used only to run the GeoModel and stays in the private database. The LLM prompt contains species names, a few Wikipedia sentences (place-naming sentences are dropped) and the time of year. The reply is checked for location words and coordinates, and the template is used if it fails. Public pages read only a post's title, slug, Markdown and publish date.
+
+## Testing
+
+`pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build` are the checks. Tests are unit and database-level only; browser and end-to-end tests are not set up yet.
 
 Tests that need MariaDB use the `<database>_test` database (or `TEST_DATABASE_URL`) and truncate its tables.
 
