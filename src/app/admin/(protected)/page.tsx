@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { jobs, posts, trips } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 import { getRunState } from "@/lib/run-queue-now";
-import { runQueueAction } from "../actions";
+import { importKmlAction, runQueueAction } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
 
 const dateTime = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
@@ -17,7 +17,7 @@ function duration(start: Date, end: Date): string {
 
 export default async function AdminOverview({ searchParams }: PageProps<"/admin">) {
   const session = await requireAdmin();
-  const { started } = await searchParams;
+  const { started, imported, importExisting, importError } = await searchParams;
   const db = getDb();
 
   const [tripRows, jobRows, [drafts], [published], [pending]] = await Promise.all([
@@ -90,6 +90,38 @@ export default async function AdminOverview({ searchParams }: PageProps<"/admin"
             </button>
           </form>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Import a track</h2>
+        <p className="muted">
+          Upload a <code>.kml</code> route (for example a Traccar export) to create a trip by hand. Species are predicted and a draft post is
+          written, the same as for a recorded walk. Times found in the file are used; fill in the fields below only if the file has none, or to
+          override them. Times are UTC.
+        </p>
+        {imported && <p className="notice">Track imported. The worker is predicting species and writing the draft.</p>}
+        {importExisting && <p className="notice">This track was imported before. The worker was started to finish any pending steps.</p>}
+        {typeof importError === "string" && <p className="error">{importError}</p>}
+        <form action={importKmlAction}>
+          <input type="hidden" name="csrf" value={session.csrfToken} />
+          <div className="field">
+            <label htmlFor="kml-file">KML file (2 MB at most)</label>
+            <input id="kml-file" type="file" name="file" accept=".kml,application/vnd.google-earth.kml+xml" required />
+          </div>
+          <div className="import-times">
+            <div className="field">
+              <label htmlFor="kml-start">Started (UTC, optional)</label>
+              <input id="kml-start" type="datetime-local" name="start" />
+            </div>
+            <div className="field">
+              <label htmlFor="kml-end">Ended (UTC, optional)</label>
+              <input id="kml-end" type="datetime-local" name="end" />
+            </div>
+          </div>
+          <button className="btn" type="submit" disabled={run.running}>
+            Import and run
+          </button>
+        </form>
       </section>
 
       <section className="panel">

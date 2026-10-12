@@ -46,6 +46,8 @@ export const trips = mysqlTable(
     positionCount: int("position_count").notNull(),
     centroidLat: double("centroid_lat").notNull(),
     centroidLon: double("centroid_lon").notNull(),
+    // Only for trips imported from a file: the sampled `[lat, lon]` route. Traccar trips read their positions from Traccar.
+    route: json("route").$type<[number, number][]>(),
     status: mysqlEnum("status", TRIP_STATUSES).notNull().default("discovered"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

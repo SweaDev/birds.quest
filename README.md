@@ -51,6 +51,7 @@ pnpm dev
 
 - `/` and `/posts/[slug]`: public blog, published posts only, Markdown sanitised with `rehype-sanitize`. No trip data or coordinates are ever read by the public pages.
 - `/admin`: owner area (single password, set `ADMIN_PASSWORD_HASH` with `pnpm admin:hash`). Overview with trips, jobs and "Run queue now"; posts with draft/published filter; per post: tick the species you really saw and regenerate, edit Markdown side by side with a live preview, publish or unpublish.
+- Import a track: on the overview page, upload a `.kml` route (up to 2 MB, for example a Traccar export) to create a trip by hand. The upload runs the usual pipeline (predict, enrich, generate) and ends in a draft post. Times come from the file (`gx:Track` times, a `TimeSpan`, or a Traccar-style "from - to" placemark name) and can be set or overridden in the form; all times are UTC. The route is stored sampled (about every 300 m) in `trips.route`, and importing the same route and period again does nothing new.
 - Security: nonce-based CSP and other headers in `src/proxy.ts`, argon2id password, httpOnly session cookie stored hashed in the database, CSRF token on every admin form, login rate limiting.
 - Set `SITE_URL` to the public address (canonical links, sitemap).
 

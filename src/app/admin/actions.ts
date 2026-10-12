@@ -6,6 +6,8 @@ import { getDb } from "@/db";
 import { clearFailedLogins, createSession, destroySession, isLoginBlocked, recordFailedLogin, verifyPassword } from "@/lib/auth";
 import { SESSION_COOKIE, clientIp, requireAdminAction, sessionCookieOptions } from "@/lib/admin";
 import { getConfig } from "@/lib/config";
+import { importTrip, parseLocalInput } from "@/lib/import-trip";
+import { MAX_KML_BYTES, parseKml } from "@/lib/kml";
 import { requestRegenerate, savePost, setPublished } from "@/lib/post-admin";
 import { triggerWorker } from "@/lib/run-queue-now";
 
@@ -80,4 +82,27 @@ export async function runQueueAction(formData: FormData) {
   await requireAdminAction(formData);
   triggerWorker();
   redirect("/admin?started=1");
+}
+
+/** Imports a KML route as a trip, then runs the worker so species, enrichment and the draft post follow. */
+export async function importKmlAction(formData: FormData) {
+  await requireAdminAction(formData);
+  const fail = (message: string): never => redirect(`/admin?importError=${encodeURIComponent(message)}`);
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return fail("Choose a .kml file.");
+  if (file.size > MAX_KML_BYTES) return fail("The file is too large (2 MB at most).");
+
+  let imported;
+  try {
+    const parsed = parseKml(await file.text());
+    imported = await importTrip(getDb(), parsed, {
+      start: parseLocalInput(formData.get("start")),
+      end: parseLocalInput(formData.get("end")),
+    });
+  } catch (error) {
+    return fail((error as Error).message);
+  }
+  triggerWorker();
+  redirect(imported.created ? "/admin?imported=1" : "/admin?importExisting=1");
 }

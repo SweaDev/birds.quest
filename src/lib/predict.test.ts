@@ -200,6 +200,34 @@ describe.skipIf(!hasTestDb)("predictTrip (database)", () => {
     expect(seenInputs).toEqual([{ lat: 52.01, lon: 13, week: 22 }]);
   });
 
+  it("uses the stored route of an imported trip and never asks Traccar", async () => {
+    await db.insert(trips).values({
+      sourceKey: "import:test",
+      deviceId: 0,
+      startedAt: new Date("2026-10-10T18:00:00Z"),
+      endedAt: new Date("2026-10-11T17:59:00Z"),
+      positionCount: 2,
+      centroidLat: 23.8,
+      centroidLon: 90.4,
+      route: [
+        [23.79, 90.37],
+        [23.82, 90.36],
+      ],
+    });
+    const [trip] = await db.select().from(trips);
+    const failing: PositionSource = {
+      listDeviceIds: async () => [],
+      positions: async () => {
+        throw new Error("Traccar must not be read");
+      },
+    };
+    await predictTrip(db, trip.id, { ...deps, source: failing });
+    expect(seenInputs).toEqual([
+      { lat: 23.79, lon: 90.37, week: 38 },
+      { lat: 23.82, lon: 90.36, week: 38 },
+    ]);
+  });
+
   it("fails for an unknown trip", async () => {
     await expect(predictTrip(db, 424242, deps)).rejects.toThrow(/not found/);
   });

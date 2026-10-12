@@ -358,6 +358,8 @@ img {
 
 input[type="text"],
 input[type="password"],
+input[type="file"],
+input[type="datetime-local"],
 textarea {
   width: 100%;
   padding: 0.65rem 0.8rem;
@@ -646,6 +648,12 @@ th {
 
 .muted {
   color: var(--muted);
+}
+
+.import-times {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 @media (max-width: 800px) {
