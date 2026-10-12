@@ -1,0 +1,32 @@
+# Installed to /etc/caddy/Caddyfile by deploy/install.sh.
+# APP_DOMAIN and TRACCAR_DOMAIN come from /etc/birdsquest/caddy.env (loaded by a systemd drop-in).
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+{$TRACCAR_DOMAIN} {
+	encode zstd gzip
+
+	# Traccar Client speaks the OsmAnd protocol, which Traccar serves on 5055 (localhost only).
+	# Everything else (web UI and API) goes to the web port.
+	@osmand_post {
+		method POST
+		path /
+	}
+	@osmand_get {
+		path /
+		query id=*
+	}
+
+	handle @osmand_post {
+		reverse_proxy 127.0.0.1:5055
+	}
+	handle @osmand_get {
+		reverse_proxy 127.0.0.1:5055
+	}
+	handle {
+		reverse_proxy 127.0.0.1:8082
+	}
+}

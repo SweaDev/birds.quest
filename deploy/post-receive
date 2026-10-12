@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Installed as hooks/post-receive in /srv/birdsquest/repo.git by deploy/install.sh.
+# Deploys pushes to the "main" branch: checkout, install, models, migrate, build, restart.
+set -euo pipefail
+
+APP_DIR=/srv/birdsquest/app
+GIT_DIR_PATH=/srv/birdsquest/repo.git
+ENV_FILE=/etc/birdsquest/birdsquest.env
+BRANCH=main
+
+deploy=0
+while read -r _old _new ref; do
+  if [ "$ref" = "refs/heads/$BRANCH" ]; then deploy=1; fi
+done
+if [ "$deploy" -eq 0 ]; then
+  echo "post-receive: nothing to deploy (only $BRANCH is deployed)"
+  exit 0
+fi
+
+unset GIT_DIR
+echo "==> Checking out $BRANCH"
+git --git-dir="$GIT_DIR_PATH" --work-tree="$APP_DIR" checkout -f "$BRANCH"
+
+cd "$APP_DIR"
+set -a
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+set +a
+
+echo "==> Installing dependencies"
+pnpm install --frozen-lockfile
+
+echo "==> Downloading models (skipped when present and verified)"
+pnpm models:download
+
+echo "==> Running migrations"
+pnpm db:migrate
+
+echo "==> Building"
+pnpm build
+mkdir -p .next/cache
+
+echo "==> Restarting web service"
+sudo -n /usr/bin/systemctl restart birdsquest-web.service
+
+echo "==> Deployed $(git --git-dir="$GIT_DIR_PATH" rev-parse --short "$BRANCH")"

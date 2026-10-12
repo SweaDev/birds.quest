@@ -1,0 +1,31 @@
+[Unit]
+Description=birds.quest worker pass (discover trips, drain job queue)
+After=network-online.target mariadb.service traccar.service
+Wants=network-online.target
+Requires=mariadb.service
+
+[Service]
+Type=oneshot
+User=birdsquest
+Group=birdsquest
+WorkingDirectory=/srv/birdsquest/app
+EnvironmentFile=/etc/birdsquest/birdsquest.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node node_modules/tsx/dist/cli.mjs worker/run.ts
+# LLM generation can be slow, allow a long pass.
+TimeoutStartSec=3h
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+SystemCallArchitectures=native

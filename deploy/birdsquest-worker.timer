@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the birds.quest worker hourly
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=120
+Persistent=true
+Unit=birdsquest-worker.service
+
+[Install]
+WantedBy=timers.target
