@@ -9,13 +9,15 @@ ai_disclosure_level: ai_assisted
 
 ## What I Built and Why
 
-I love watching birds, and I'm bad at writing it down. I used to enter every walk into eBird by hand. It was fun for a while, then it became homework, and homework is the opposite of touching grass.
+I love watching birds with my *Bushnell ENGAGE 8x42* Binoculars. I like to track some of my experiences, but I'm too lazy to write them down. I used to enter every walk into eBird APP by hand at the very beginning of my bird watching journey. It was fun for a while, but then it became like homework, and homework is the opposite of having fun while touching grass.
 
-**Birds.Quest** removes the homework. I switch on a GPS tracker, walk, and put my phone away. Later, a post about the walk shows up on my blog, written for me.
+**Birds.Quest** is my attempt to remove the homework. I switch on a GPS tracker, walk, and put my phone in the pocket. Later, a post about the walk shows up on my blog, written for me. That's the idea of Birds Quest.
 
-The post is not a claim that I saw these birds. The system predicts which species *anyone* could plausibly have met along my exact route at that time of year, then writes it up as "what you might see if you took this path". I open the draft, tick the birds I really saw, and hit regenerate. If I don't like the words, I edit the Markdown in a side-by-side editor. Posts are drafts until I publish them.
+The auto generated post is not a claim that I saw these birds. Rather it's an inspiration to take the walk again, a reminder that says what's waiting for me in the nature. And since the posts will be in public, perhaps a few other people will feel the same as well!
 
-Two rules shaped the whole build:
+The system predicts which species *anyone* could plausibly have met along my exact route at that time of year, then writes it up as "what you might see if you took this path". I open the draft, tick the birds I really saw (if I get time), and hit regenerate. If I don't like the words, I edit the Markdown in a side-by-side editor. For now, posts are drafts until I publish them. Eventually after I test the system enough, I plan to auto publish them to with minimum or no effort from my part.
+
+### Two rules shaped the whole build:
 
 1. **Location never leaves the server.** The blog and the LLM prompt contain no coordinates and no place names. The post describes birds and seasons, never where I was.
 2. **Predictions are not sightings.** Everything is a draft until I approve it, and the species list is editable.
@@ -23,6 +25,8 @@ Two rules shaped the whole build:
 It's a tool for my own walks, but it's open source. Anyone can point it at their own Traccar server and get the same effortless blog.
 
 ## Demo
+
+> Note: I didn't complete the server deployment while writing this post. Site will become live once I complete tests on the live server.
 
 {%embed https://birds.quest %}
 
@@ -32,13 +36,15 @@ It's a tool for my own walks, but it's open source. Anyone can point it at their
 
 ## Using the project
 
+I couldn't finish the project before taking the first bird watching journey for it. However, I designed it such that even a previous run with Traccar can be uploaded and published later.
+
 Here's a real run on a real track. I exported a GPS track from my Traccar server as a KML file: 82 positions, about 10.4 km, around 10–11 October 2026. I'm not publishing the coordinates, for the same reason the blog doesn't.
 
 The pipeline processed it like this:
 
 | Step | What happened |
 | --- | --- |
-| Discover | Traccar positions became one finished trip (more than 10 minutes, then idle). |
+| Discover | Traccar positions became one finished trip (more than 30 minutes, then idle). |
 | Sample | The 82 positions were thinned to **24 route points**, about one every 300 m. |
 | Week | 10–11 October is **week 38** of BirdNET's 48-week year. |
 | Predict | The GeoModel ran once, as a single batch of 24 `[lat, lon, week]` inputs, on a plain CPU. Each species keeps its best score along the route. |
@@ -164,4 +170,4 @@ The same goes for the rest of the stack. BirdNET's GeoModel is open, so I can ru
 
 - **Best Use of DigitalOcean:** the whole production deployment runs on a DigitalOcean Droplet (Traccar, MariaDB, Caddy, the Next.js app, the worker timer and git-push deploys), and post generation goes through DigitalOcean Serverless Inference.
 - **Best Use of Gemma:** Gemma 4 E2B for local development and Gemma 4 31B in production write every post, behind a prompt and output filter designed so that no location data ever reaches the model.
-- **Best Use of GitHub Copilot:** Copilot wrote the project, with a workflow I could review. I wrote the spec by hand, `/plan` mode produced the plan, Agent mode produced a 36-task TODO with rules for the agent (one commit per task, no pushing, never leak location data), and Agent mode then implemented it task by task. I used a git worktree to write this post while Copilot kept building, then had Copilot enrich the draft from the generated README. All of it used Claude Sonnet 5.5, and it ate almost my whole monthly quota. See [Building It with GitHub Copilot](#building-it-with-github-copilot).
+- **Best Use of GitHub Copilot:** I wrote the spec by hand, then Copilot generated the project: `/plan` mode produced the plan, Agent mode produced a 36-task TODO with rules for the agent (one commit per task, no pushing, never leak location data), and Agent mode then implemented it task by task. I used a git worktree to write this post while Copilot kept building, then had Copilot enrich the draft from the generated README. All of it used Claude Sonnet 5.5, and it ate almost my whole monthly quota 😂. The evidence is stored in the [specs directory](https://github.com/SweaDev/birds.quest/tree/main/specs) of the source code.
