@@ -27,10 +27,13 @@ const LLM_DEFAULTS = {
   ollama: {
     baseUrl: "http://localhost:11434/v1",
     model: "gemma4:e2b",
+    // Gemma 4 on Ollama "thinks" by default and can use its whole token budget before answering.
+    reasoningEffort: "none",
   },
   digitalocean: {
     baseUrl: "https://inference.do-ai.run/v1",
-    model: undefined,
+    model: "gemma-4-31B-it",
+    reasoningEffort: undefined,
   },
 } as const;
 
@@ -46,6 +49,8 @@ const envSchema = z
     LLM_BASE_URL: optional(z.url()),
     LLM_API_KEY: optional(z.string().min(1)),
     LLM_MODEL: optional(z.string().min(1)),
+    // Sent as `reasoning_effort` when set. Defaults: ollama "none", digitalocean unset.
+    LLM_REASONING_EFFORT: optional(z.enum(["none", "low", "medium", "high"])),
 
     // `$` must be written as `\$` in .env files (Next.js expands `$VAR`); the
     // backslashes are removed here so every loader (Next, Node, systemd) works.
@@ -74,13 +79,6 @@ const envSchema = z
           message: "required when LLM_PROVIDER=digitalocean",
         });
       }
-      if (!env.LLM_MODEL) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["LLM_MODEL"],
-          message: "required when LLM_PROVIDER=digitalocean",
-        });
-      }
     }
   });
 
@@ -93,6 +91,7 @@ export type Config = {
     baseUrl: string;
     apiKey?: string;
     model: string;
+    reasoningEffort?: "none" | "low" | "medium" | "high";
   };
   adminPasswordHash: string;
   sessionSecret: string;
@@ -127,7 +126,8 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
       provider: e.LLM_PROVIDER,
       baseUrl: (e.LLM_BASE_URL ?? defaults.baseUrl).replace(/\/+$/, ""),
       apiKey: e.LLM_API_KEY,
-      model: (e.LLM_MODEL ?? defaults.model) as string,
+      model: e.LLM_MODEL ?? defaults.model,
+      reasoningEffort: e.LLM_REASONING_EFFORT ?? defaults.reasoningEffort,
     },
     adminPasswordHash: e.ADMIN_PASSWORD_HASH,
     sessionSecret: e.SESSION_SECRET,

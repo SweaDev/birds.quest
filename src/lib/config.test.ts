@@ -22,6 +22,7 @@ describe("parseConfig", () => {
       baseUrl: "http://localhost:11434/v1",
       apiKey: undefined,
       model: "gemma4:e2b",
+      reasoningEffort: "none",
     });
   });
 
@@ -64,17 +65,21 @@ describe("parseConfig", () => {
     expect(config.adminPasswordHash).toBe(validEnv.ADMIN_PASSWORD_HASH);
   });
 
-  it("requires an API key and model for DigitalOcean", () => {
+  it("requires an API key for DigitalOcean and defaults to Gemma 4", () => {
     const env = { ...validEnv, LLM_PROVIDER: "digitalocean" };
     expect(() => parseConfig(env)).toThrow(/LLM_API_KEY/);
-    expect(() => parseConfig(env)).toThrow(/LLM_MODEL/);
 
-    const config = parseConfig({ ...env, LLM_API_KEY: "key", LLM_MODEL: "gemma-4" });
-    expect(config.llm).toMatchObject({
+    const config = parseConfig({ ...env, LLM_API_KEY: "key" });
+    expect(config.llm).toEqual({
       provider: "digitalocean",
       baseUrl: "https://inference.do-ai.run/v1",
       apiKey: "key",
-      model: "gemma-4",
+      model: "gemma-4-31B-it",
+      reasoningEffort: undefined,
+    });
+    expect(parseConfig({ ...env, LLM_API_KEY: "k", LLM_MODEL: "other", LLM_REASONING_EFFORT: "low" }).llm).toMatchObject({
+      model: "other",
+      reasoningEffort: "low",
     });
   });
 
@@ -93,6 +98,7 @@ describe("parseConfig", () => {
     ["PREDICTION_TOP_K", "0"],
     ["IDLE_THRESHOLD_MINUTES", "abc"],
     ["LLM_PROVIDER", "openai"],
+    ["LLM_REASONING_EFFORT", "maximum"],
   ])("rejects invalid %s=%s", (key, value) => {
     const env: Record<string, string | undefined> = { ...validEnv, [key]: value };
     expect(() => parseConfig(env)).toThrow(ConfigError);
