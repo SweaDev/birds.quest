@@ -230,11 +230,28 @@ export function templateBlurb(species: PostSpecies): string {
 
 const escapeLinkText = (s: string) => s.replace(/[[\]]/g, "");
 
+/**
+ * Photographer credits keep the author's name (the licence needs it) but not links,
+ * social handles or "from <place>" tails, which would put places on the page.
+ */
+export function cleanAttribution(text: string): string {
+  const cleaned = text
+    .replace(/\([^)]*(?:https?:|www\.|@|\.com|\.org|\.net|\.dev)[^)]*\)/gi, "")
+    .replace(/\b(?:https?:\/\/|www\.)\S+/gi, "")
+    .replace(/\S*\.(?:com|org|net|dev|io)\S*/gi, "")
+    .replace(/\s@\S+/g, "")
+    .replace(/\s+from\s+\p{Lu}[^,.;]*(?:,\s*\p{Lu}[^,.;]*)*/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return stripPlaceSentences(cleaned).text.replace(/\s+,/g, ",") || "Wikimedia Commons contributor";
+}
+
 function imageBlock(species: PostSpecies): string {
   const info = species.info;
   if (!info?.imageUrl || !info.imageLicense) return "";
+  const author = cleanAttribution((info.imageAttribution ?? "").replace(/,?\s*via Wikimedia Commons$/i, ""));
   const license = info.imageLicenseUrl ? `[${escapeLinkText(info.imageLicense)}](${info.imageLicenseUrl})` : info.imageLicense;
-  const credit = `*Photo: ${escapeLinkText(info.imageAttribution ?? "Wikimedia Commons")}, ${license}.*`;
+  const credit = `*Photo: ${escapeLinkText(author)}, via Wikimedia Commons, ${license}.*`;
   return `![${escapeLinkText(species.commonName)}](${info.imageUrl})\n\n${credit}`;
 }
 

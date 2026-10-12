@@ -68,7 +68,23 @@ const CITIES = [
   "Osaka", "Kyoto", "Sydney", "Melbourne", "Brisbane", "Perth", "Auckland", "Wellington", "Dhaka",
 ];
 
-const PLACES: string[] = [...new Set([...CONTINENTS_AND_REGIONS, ...COUNTRIES, ...SUBDIVISIONS, ...CITIES])];
+// Adjectives for places. Species names that contain them ("Eurasian Blackbird") are masked before checking.
+const DEMONYMS = [
+  "American", "Australian", "African", "Asian", "European", "Eurasian", "British", "English", "Scottish",
+  "Welsh", "Irish", "German", "French", "Spanish", "Italian", "Dutch", "Belgian", "Swiss", "Austrian",
+  "Polish", "Swedish", "Norwegian", "Danish", "Finnish", "Russian", "Siberian", "Chinese", "Japanese",
+  "Indian", "Canadian", "Mexican", "Brazilian", "Argentine", "Chilean", "Peruvian", "Turkish", "Greek",
+  "Egyptian", "Moroccan", "Kenyan", "Nigerian", "Hawaiian", "Alaskan", "Californian", "Texan", "Tasmanian",
+  "Mediterranean", "Atlantic", "Pacific", "Arctic", "Antarctic", "Tropical", "Neotropical", "Palearctic",
+];
+
+// Vague but still revealing range talk ("throughout the northern part of the continent").
+const GEO_WORDS = ["continent", "continents", "subcontinent", "hemisphere", "hemispheres", "latitudes"];
+const capitalised = GEO_WORDS.map((w) => w[0].toUpperCase() + w.slice(1));
+
+const PLACES: string[] = [
+  ...new Set([...CONTINENTS_AND_REGIONS, ...COUNTRIES, ...SUBDIVISIONS, ...CITIES, ...DEMONYMS, ...GEO_WORDS, ...capitalised]),
+];
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

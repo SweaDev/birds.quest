@@ -8,6 +8,7 @@ import {
   LeakError,
   buildMessages,
   buildPost,
+  cleanAttribution,
   cleanMarkdown,
   generatePost,
   parseDraft,
@@ -90,6 +91,17 @@ describe("speciesFacts", () => {
     expect(facts).not.toMatch(/Europe|Asia|Africa/);
   });
 
+  it("drops range talk that names a continent, a hemisphere or another country's birds", () => {
+    const magpie: PostSpecies = {
+      ...tit,
+      info: info({
+        extract:
+          "The magpie is a bold bird. It is resident throughout the northern part of the continent. It is not related to the Australian magpie. It breeds in the northern hemisphere.",
+      }),
+    };
+    expect(speciesFacts(magpie)).toBe("The magpie is a bold bird.");
+  });
+
   it("returns nothing without an extract and trims long text", () => {
     expect(speciesFacts(robin)).toBe("");
     const long = { ...tit, info: info({ extract: "Birds sing loudly every morning. ".repeat(40) }) };
@@ -122,6 +134,30 @@ describe("buildMessages (privacy)", () => {
 describe("cleanMarkdown", () => {
   it("removes images, links, html and code fences", () => {
     expect(cleanMarkdown("Hi ![x](http://a/b.png) [site](http://a) <b>bold</b> ```md")).toBe("Hi site bold");
+  });
+});
+
+describe("cleanAttribution", () => {
+  it.each([
+    ["Frank Vassen from Brussels, Belgium", "Frank Vassen"],
+    ["Bengt Nyman from Vaxholm, Sweden", "Bengt Nyman"],
+    ["Giacomo Cimino (foto.giacomocimino.workers.dev · @giacomociminoph)", "Giacomo Cimino"],
+    ["Jane Doe https://example.com/jane", "Jane Doe"],
+    ["Andreas Trepte", "Andreas Trepte"],
+    ["Alexis Lours", "Alexis Lours"],
+  ])("%s -> %s", (input, expected) => {
+    expect(cleanAttribution(input)).toBe(expected);
+  });
+
+  it("falls back to a neutral credit when nothing usable is left", () => {
+    expect(cleanAttribution("Photographed in Germany")).toBe("Wikimedia Commons contributor");
+  });
+
+  it("is applied to the credit line of the post", async () => {
+    const withPlace: PostSpecies = { ...tit, info: info({ imageAttribution: "Frank Vassen from Brussels, Belgium, via Wikimedia Commons" }) };
+    const built = await buildPost([withPlace], when, stub(reply));
+    expect(built.markdown).toContain("*Photo: Frank Vassen, via Wikimedia Commons, [CC BY 4.0]");
+    expect(built.markdown).not.toMatch(/Brussels|Belgium/);
   });
 });
 
