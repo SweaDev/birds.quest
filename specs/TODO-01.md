@@ -71,7 +71,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 ## Phase 5: Docs and final checks
 
 - [ ] T5.1 Update `README.md`: architecture, local dev (MariaDB, Ollama, model download, seed), env vars, deploy steps, privacy rule about location data.
-- [ ] T5.2 Final verification: all tests, lint, typecheck and build pass, the manual admin flow works, and no location data appears in public pages or LLM prompts. Review open items below.
+- [ ] T5.2 Final verification: all tests, lint, typecheck and build pass, the manual admin flow works. Review open items below.
 
 ## Open questions
 
