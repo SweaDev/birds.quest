@@ -50,14 +50,14 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Phase 3: Web app
 
-- [x] T3.1 Public blog: index and `/posts/[slug]` with markdown rendering and `rehype-sanitize`, SEO metadata, published posts only. Check that no location data is exposed.
-- [x] T3.2 Admin auth: single owner, argon2 password hash from env, httpOnly/SameSite/secure session cookie stored in `admin_sessions`, login rate limiting, CSRF protection for server actions, logout.
-- [x] T3.3 Security headers and middleware (CSP, HSTS, frame, referrer, content-type options). Protect `/admin/**`.
-- [x] T3.4 Admin: trips list with status, and post list with draft/published filter.
-- [x] T3.5 Admin post page: species checklist (select or deselect observed species), Regenerate button (enqueues `generate` with the selected species), publish and unpublish.
-- [x] T3.6 Admin side-by-side markdown editor with live sanitized preview and save.
-- [x] T3.7 "Run queue now" admin action, with a status display for recent jobs and errors.
-- [x] T3.8 Tests: auth, sanitisation, species selection and regenerate. Then `pnpm lint`, `pnpm typecheck` and `pnpm build` all pass.
+- [x] T3.1 Public blog: index and `/posts/[slug]` with markdown rendering and `rehype-sanitize`, SEO metadata, published posts only. Check that no location data is exposed. (1bf7317)
+- [x] T3.2 Admin auth: single owner, argon2 password hash from env, httpOnly/SameSite/secure session cookie stored in `admin_sessions`, login rate limiting, CSRF protection for server actions, logout. (1bf7317)
+- [x] T3.3 Security headers and middleware (CSP, HSTS, frame, referrer, content-type options). Protect `/admin/**`. (1bf7317)
+- [x] T3.4 Admin: trips list with status, and post list with draft/published filter. (1bf7317)
+- [x] T3.5 Admin post page: species checklist (select or deselect observed species), Regenerate button (enqueues `generate` with the selected species), publish and unpublish. (1bf7317)
+- [x] T3.6 Admin side-by-side markdown editor with live sanitized preview and save. (1bf7317)
+- [x] T3.7 "Run queue now" admin action, with a status display for recent jobs and errors. (1bf7317)
+- [x] T3.8 Tests: auth, sanitisation, species selection and regenerate. Then `pnpm lint`, `pnpm typecheck` and `pnpm build` all pass. (1bf7317)
 
 ## Phase 4: Deployment
 
