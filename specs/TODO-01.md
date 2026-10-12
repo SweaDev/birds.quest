@@ -46,7 +46,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] T2.8 Wikipedia client (`src/lib/wikipedia.ts`): `page/summary/{title}`, scientific name first then common name, User-Agent header, caching in `species_info`, rate limiting, image attribution and licence, skip images without licence info. Tests with mocked fetch. (671a8ce)
 - [x] T2.9 LLM client (`src/lib/llm.ts`): one OpenAI-compatible client with env switch. Dev: Ollama Gemma-4 E2B. Prod: DigitalOcean `https://inference.do-ai.run/v1/chat/completions` with a model access key. Timeouts and retries. (5ba6143)
 - [x] T2.10 Post generation (`src/lib/posts.ts`): prompt with species, Wikipedia facts and season only, written as "what anyone might see on this route". Strip or reject location words, template fallback if the LLM fails, include image attribution, save as a draft with `post_species` rows. Tests: no coordinates or place strings reach the LLM. (1f31ffb)
-- [x] T2.11 End-to-end local run: seed fake trips, run the worker against Ollama, check predictions, species info and a draft post exist.
+- [x] T2.11 End-to-end local run: seed fake trips, run the worker against Ollama, check predictions, species info and a draft post exist. (a4b8fbf)
 
 ## Phase 3: Web app
 
