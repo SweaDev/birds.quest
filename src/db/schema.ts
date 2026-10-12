@@ -175,6 +175,17 @@ export const adminSessions = mysqlTable(
   ],
 );
 
+// One row per failed admin login, used for rate limiting.
+export const loginAttempts = mysqlTable(
+  "login_attempts",
+  {
+    id: id(),
+    ip: varchar("ip", { length: 64 }).notNull(),
+    attemptedAt: ts("attempted_at").notNull().default(sql`CURRENT_TIMESTAMP(3)`),
+  },
+  (t) => [index("login_attempts_ip_time_idx").on(t.ip, t.attemptedAt)],
+);
+
 export type Trip = typeof trips.$inferSelect;
 export type NewTrip = typeof trips.$inferInsert;
 export type Prediction = typeof predictions.$inferSelect;

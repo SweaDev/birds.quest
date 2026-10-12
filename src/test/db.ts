@@ -18,7 +18,7 @@ export function getTestDb(): Db {
   return createDb(url);
 }
 
-const TABLES = ["post_species", "posts", "predictions", "species_info", "jobs", "admin_sessions", "trips"];
+const TABLES = ["post_species", "posts", "predictions", "species_info", "jobs", "admin_sessions", "login_attempts", "trips"];
 
 export async function resetTestDb(db: Db): Promise<void> {
   // FOREIGN_KEY_CHECKS is per connection, so use one dedicated connection.

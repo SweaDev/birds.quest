@@ -55,7 +55,7 @@ export class GeoModel {
 
   static async load(paths: GeoModelPaths = defaultModelPaths()): Promise<GeoModel> {
     const [species, session] = await Promise.all([
-      readFile(paths.labelsPath, "utf8").then(parseLabels),
+      readFile(/* turbopackIgnore: true */ paths.labelsPath, "utf8").then(parseLabels),
       ort.InferenceSession.create(paths.modelPath),
     ]);
     return new GeoModel(session, species);

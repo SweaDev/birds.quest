@@ -41,7 +41,8 @@ export type WikipediaOptions = {
 };
 
 const SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
-const THUMB_WIDTH = 640;
+// Wikimedia only serves a fixed set of thumbnail widths (e.g. 330, 500, 960, 1280); others return HTTP 400.
+const THUMB_WIDTH = 960;
 const WIKIMEDIA_IMAGE_HOSTS = new Set(["upload.wikimedia.org", "thumb.wikimedia.org"]);
 
 type SummaryResponse = {

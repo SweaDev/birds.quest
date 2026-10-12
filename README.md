@@ -43,8 +43,16 @@ pnpm dev
 | `pnpm db:generate` | Generate a migration after editing `src/db/schema.ts` |
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Seed fake Traccar data (dev only) |
+| `pnpm admin:hash` | Create `ADMIN_PASSWORD_HASH` for `.env` (prompts for the password) |
 | `pnpm models:download` | Download the BirdNET geomodel files into `models/` |
 | `pnpm worker` | Run one worker pass: discover trips, then drain the job queue and exit |
+
+## Web app
+
+- `/` and `/posts/[slug]`: public blog, published posts only, Markdown sanitised with `rehype-sanitize`. No trip data or coordinates are ever read by the public pages.
+- `/admin`: owner area (single password, set `ADMIN_PASSWORD_HASH` with `pnpm admin:hash`). Overview with trips, jobs and "Run queue now"; posts with draft/published filter; per post: tick the species you really saw and regenerate, edit Markdown side by side with a live preview, publish or unpublish.
+- Security: nonce-based CSP and other headers in `src/proxy.ts`, argon2id password, httpOnly session cookie stored hashed in the database, CSRF token on every admin form, login rate limiting.
+- Set `SITE_URL` to the public address (canonical links, sitemap).
 
 ## Pipeline
 

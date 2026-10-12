@@ -82,9 +82,9 @@ describe("helpers", () => {
   });
 
   it("rewrites thumbnail widths", () => {
-    expect(thumbnailUrl(THUMB)).toBe(THUMB.replace("320px", "640px"));
+    expect(thumbnailUrl(THUMB)).toBe(THUMB.replace("320px", "960px"));
     expect(thumbnailUrl(ORIGINAL)).toBe(ORIGINAL);
-    expect(thumbnailUrl(`${THUMB}?utm_source=en.wikipedia.org&utm_campaign=api`)).toBe(THUMB.replace("320px", "640px"));
+    expect(thumbnailUrl(`${THUMB}?utm_source=en.wikipedia.org&utm_campaign=api`)).toBe(THUMB.replace("320px", "960px"));
   });
 });
 
@@ -119,7 +119,7 @@ describe("WikipediaClient", () => {
       extract: "The common blackbird is a species of true thrush.",
       pageUrl: "https://en.wikipedia.org/wiki/Common_blackbird",
       image: {
-        url: THUMB.replace("320px", "640px"),
+        url: THUMB.replace("320px", "960px"),
         attribution: "Jane & Co, via Wikimedia Commons",
         license: "CC BY-SA 4.0",
         licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
