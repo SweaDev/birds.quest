@@ -68,3 +68,72 @@ Tests that need MariaDB use the `<database>_test` database (or `TEST_DATABASE_UR
 The database smoke test (`src/db/db.smoke.test.ts`) runs only when `DATABASE_URL` and `TRACCAR_DATABASE_URL` are set.
 
 `ADMIN_PASSWORD_HASH` must have every `$` escaped as `\$` in `.env`.
+
+## Server deployment (Ubuntu 26.04)
+
+One VPS runs everything: MariaDB, native Traccar, the Next.js app (`birdsquest-web.service`, port 3000), the hourly worker (`birdsquest-worker.timer`) and Caddy for HTTPS. Only ports 22, 80 and 443 are open (UFW). Traccar and the app listen on `127.0.0.1` only.
+
+Files are in [deploy/](deploy/): `install.sh`, `Caddyfile`, the systemd units and the git `post-receive` hook.
+
+### 1. DNS
+
+Create two A/AAAA records pointing at the server: the blog domain (e.g. `birds.example.com`) and the Traccar domain (e.g. `gps.example.com`). Caddy needs them to get Let's Encrypt certificates.
+
+### 2. Run the installer
+
+Copy the repo to the server (e.g. `git clone` or `scp -r`) and, as root:
+
+```sh
+sudo APP_DOMAIN=birds.example.com TRACCAR_DOMAIN=gps.example.com \
+     LETSENCRYPT_EMAIL=you@example.com ./deploy/install.sh
+```
+
+It is idempotent. It installs MariaDB, Traccar (configured for MariaDB), Node 22+, pnpm and Caddy; creates the `birdsquest` system user, the `traccar` and `birdsquest` databases and users (`traccar` RW, `birdsquest` RW, `birdsquest_ro` SELECT on the Traccar DB); installs the Caddyfile and systemd units; creates the bare repo `/srv/birdsquest/repo.git` with the deploy hook; and enables UFW. Optional variables: `DEPLOY_SSH_PUBKEY` (key allowed to push; defaults to root's `authorized_keys`), `SSH_PORT`, `TRACCAR_VERSION`.
+
+Generated passwords are in `/etc/birdsquest/secrets.env` (root only). The app configuration is `/etc/birdsquest/birdsquest.env` (outside the repo, created once, never overwritten). Edit it and set `LLM_API_KEY`, `WIKIPEDIA_USER_AGENT` and `ADMIN_PASSWORD_HASH` (see step 4).
+
+### 3. Traccar admin account and hardening
+
+1. Open `https://<TRACCAR_DOMAIN>` and register your account. The first account becomes the administrator.
+2. Re-run `./deploy/install.sh` (same variables). Once a user exists it sets `registration = 0` in Traccar and restarts it, so nobody else can sign up. If you re-run it before registering, it only reminds you.
+3. In Traccar, add a device whose **identifier** is the one you will use in the client (unknown devices are rejected).
+
+### 4. First deploy
+
+From your development machine:
+
+```sh
+git remote add production birdsquest@<server>:/srv/birdsquest/repo.git
+git push production main
+```
+
+The `post-receive` hook (only for `main`) checks out `/srv/birdsquest/app`, then runs `pnpm install --frozen-lockfile`, `pnpm models:download`, `pnpm db:migrate`, `pnpm build` and restarts `birdsquest-web.service`. Later pushes redeploy the same way.
+
+Create the admin password hash on the server and put it in the env file, keeping the `\$` escapes and single quotes:
+
+```sh
+cd /srv/birdsquest/app && sudo -u birdsquest pnpm admin:hash
+sudoedit /etc/birdsquest/birdsquest.env
+sudo systemctl restart birdsquest-web
+```
+
+Then start the worker timer: `sudo systemctl enable --now birdsquest-worker.timer`. Run a pass by hand with `sudo systemctl start birdsquest-worker.service`.
+
+### 5. Traccar Client setup
+
+In the Traccar Client app set:
+
+- **Device identifier**: the identifier you added in Traccar.
+- **Server URL**: `https://<TRACCAR_DOMAIN>` (HTTPS, no port). Caddy forwards the client's OsmAnd requests to Traccar on `127.0.0.1:5055`.
+- Frequency and location accuracy as you like, then start the service.
+
+### Operations
+
+```sh
+journalctl -u birdsquest-web -f          # web logs
+journalctl -u birdsquest-worker -e       # last worker pass
+systemctl list-timers birdsquest-worker  # next run
+journalctl -u traccar -e                 # Traccar logs
+```
+
+After changing anything in `deploy/` (units, Caddyfile), re-run `./deploy/install.sh`.
